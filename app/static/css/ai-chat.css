@@ -1,0 +1,362 @@
+/* ==========================================================
+   AI Chat module — static/css/ai-chat.css
+   Scoped entirely under .chat-shell so it can never affect
+   Dashboard / Customers / Properties / Leads.
+
+   Reuses tokens already defined in dashboard.css:
+   --purple-500 --indigo-500 --cyan-400 --glass-bg --glass-bg-hover
+   --glass-border --radius-xl --radius-lg --radius-md
+   --shadow-card --shadow-glow-purple --text-primary --text-muted
+   --text-faint --font-display --font-body --font-mono
+   No variables are redefined here.
+
+   Same class names / element IDs as before — HTML and chat.js
+   are untouched by this pass.
+   ========================================================== */
+
+/* ---------- Chat shell ---------- */
+.chat-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 180px);
+  min-height: 520px;
+  padding: 0;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Soft identity glow — purely decorative, gives AI Chat its own
+   presence without breaking the shared glass-card look */
+.chat-shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(124, 92, 252, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 100% 100%, rgba(34, 211, 238, 0.06) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.chat-shell .chat-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--glass-border);
+  flex-shrink: 0;
+}
+
+/* ---------- Message window ---------- */
+.chat-shell .chat-window {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  scroll-behavior: smooth;
+}
+
+/* Custom slim scrollbar (webkit) — falls back to default elsewhere */
+.chat-shell .chat-window::-webkit-scrollbar { width: 6px; }
+.chat-shell .chat-window::-webkit-scrollbar-track { background: transparent; }
+.chat-shell .chat-window::-webkit-scrollbar-thumb {
+  background: rgba(124, 92, 252, 0.35);
+  border-radius: 999px;
+}
+.chat-shell .chat-window::-webkit-scrollbar-thumb:hover { background: rgba(124, 92, 252, 0.55); }
+
+/* ---------- Empty / welcome state ---------- */
+.chat-shell .chat-empty {
+  margin: auto;
+  text-align: center;
+  max-width: 440px;
+  animation: chatFadeUp 0.4s ease;
+}
+.chat-shell .pulse-orb.static {
+  position: static;
+  margin: 0 auto 18px;
+  animation: none;
+  width: 68px;
+  height: 68px;
+  font-size: 1.7rem;
+  box-shadow: 0 10px 30px rgba(124, 92, 252, 0.35);
+}
+.chat-shell .pulse-orb.static .ring { display: none; }
+.chat-shell .chat-empty h2 {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+.chat-shell .chat-empty p {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+
+/* ---------- Quick suggestion chips ---------- */
+.chat-shell .suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.chat-shell .suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.chat-shell .suggestion-chip i {
+  color: var(--purple-500);
+  font-size: 0.9rem;
+}
+.chat-shell .suggestion-chip:hover {
+  background: var(--glass-bg-hover);
+  border-color: var(--purple-500);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(124, 92, 252, 0.2);
+}
+.chat-shell .suggestion-chip:active { transform: translateY(0); }
+
+/* ---------- Message bubbles ---------- */
+.chat-shell .msg {
+  display: flex;
+  gap: 10px;
+  max-width: 78%;
+  animation: chatFadeUp 0.25s ease;
+}
+.chat-shell .msg-ai { align-self: flex-start; flex-direction: column; gap: 10px; }
+.chat-shell .msg-ai > .bubble-row { display: flex; gap: 10px; align-items: flex-start; }
+.chat-shell .msg-customer { align-self: flex-end; }
+
+.chat-shell .bubble {
+  padding: 13px 17px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  line-height: 1.6;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+}
+.chat-shell .msg-ai .bubble {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-top-left-radius: 4px;
+  backdrop-filter: blur(12px);
+}
+.chat-shell .msg-customer .bubble {
+  background: linear-gradient(135deg, var(--purple-500), var(--indigo-500));
+  color: #fff;
+  border-top-right-radius: 4px;
+  box-shadow: 0 4px 16px rgba(124, 92, 252, 0.3);
+}
+.chat-shell .msg .tl-icon {
+  width: 34px;
+  height: 34px;
+  font-size: 0.88rem;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* ---------- Typing indicator ---------- */
+.chat-shell .typing-dots { display: inline-flex; gap: 4px; align-items: center; padding: 2px 4px; }
+.chat-shell .typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--purple-500);
+  opacity: 0.6;
+  animation: chatTypingBounce 1.2s infinite ease-in-out;
+}
+.chat-shell .typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.chat-shell .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chatTypingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+/* ---------- Property recommendation cards ---------- */
+.chat-shell .property-card {
+  position: relative;
+  margin-top: 4px;
+  padding: 18px 18px 18px 20px;
+  max-width: 340px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.chat-shell .property-card::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--purple-500), var(--cyan-400));
+}
+.chat-shell .property-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-glow-purple);
+  background: var(--glass-bg-hover);
+}
+.chat-shell .property-card h4 {
+  font-family: var(--font-display);
+  font-size: 0.96rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+  padding-right: 70px;
+}
+.chat-shell .property-card .ptype {
+  font-size: 0.7rem;
+  color: var(--purple-500);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 10px;
+  display: block;
+}
+.chat-shell .property-card .pdesc {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  line-height: 1.55;
+}
+.chat-shell .property-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 12px;
+  list-style: none;
+  padding: 0;
+}
+.chat-shell .property-card li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+.chat-shell .property-card li i { color: var(--purple-500); width: 16px; text-align: center; }
+.chat-shell .property-card li.mono { font-family: var(--font-mono); color: var(--text-primary); font-weight: 600; }
+.chat-shell .property-card .status {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+/* ---------- Input bar ---------- */
+.chat-shell .chat-input-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto 22px;
+  padding: 7px 7px 7px 20px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.chat-shell .chat-input-bar:focus-within {
+  border-color: var(--purple-500);
+  box-shadow: 0 0 0 4px rgba(124, 92, 252, 0.16);
+}
+.chat-shell .chat-input-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+}
+.chat-shell .chat-input-bar input::placeholder { color: var(--text-faint); }
+
+.chat-shell .send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, var(--purple-500), var(--indigo-500));
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-glow-purple);
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+.chat-shell .send-btn:hover { transform: scale(1.06); filter: brightness(1.08); }
+.chat-shell .send-btn:active { transform: scale(0.94); }
+.chat-shell .send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ---------- Shared entrance animation ---------- */
+@keyframes chatFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================
+   RESPONSIVE — mirrors the project's existing breakpoints
+   ========================================================== */
+@media (max-width: 1200px) {
+  .chat-shell .chat-window,
+  .chat-shell .chat-input-bar { max-width: 100%; }
+}
+
+@media (max-width: 991px) {
+  .chat-shell { height: calc(100vh - 190px); }
+  .chat-shell .chat-window { padding: 22px 16px; }
+  .chat-shell .chat-input-bar { margin-left: 16px; margin-right: 16px; }
+}
+
+@media (max-width: 576px) {
+  .chat-shell { height: calc(100vh - 170px); min-height: 420px; }
+  .chat-shell .chat-status-bar { padding: 12px 16px; }
+  .chat-shell .msg { max-width: 92%; }
+  .chat-shell .property-card { max-width: 100%; }
+  .chat-shell .property-card h4 { padding-right: 0; }
+  .chat-shell .property-card .status { position: static; display: inline-block; margin-top: 4px; }
+  .chat-shell .chat-input-bar { margin: 0 14px 16px; padding: 6px 6px 6px 16px; }
+  .chat-shell .send-btn { width: 38px; height: 38px; }
+  .chat-shell .suggestion-chip { font-size: 0.78rem; padding: 8px 14px; }
+}
+
+/* ==========================================================
+   PUBLIC AI CHAT LAYOUT
+   Remove CRM sidebar spacing
+   ========================================================== */
+
+/* ==========================================================
+   PUBLIC AI CHAT LAYOUT
+   ========================================================== */
+
+.public-ai-main {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+.public-ai-main .chat-shell {
+    height: calc(100vh - 180px);
+    min-height: 520px;
+}
+
+.public-ai-main .chat-window {
+    min-height: 0;
+}

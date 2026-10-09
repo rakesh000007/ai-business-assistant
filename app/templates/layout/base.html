@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Dashboard{% endblock %} · AI Business Assistant</title>
+
+<!-- Bootstrap 5 -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+<!-- Fonts: Sora (display) / Inter (body) / JetBrains Mono (data) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% block extra_css %}{% endblock %}
+</head>
+<body>
+
+{% set nav_items = [
+  ('dashboard', 'Dashboard', 'bi-grid-1x2-fill'),
+  ('customer', 'Customers', 'bi-people-fill'),
+  ('property', 'Properties', 'bi-houses-fill'),
+  ('ai', 'AI Assistant', 'bi-stars'),
+  ('call', 'Call History', 'bi-telephone-fill'),
+  ('reports', 'Reports', 'bi-bar-chart-fill'),
+  ('settings', 'Settings', 'bi-gear-fill')
+] %}
+{% set active_module = request.endpoint.split('.')[0] if request.endpoint else 'dashboard' %}
+{% set public_ai_chat = request.endpoint == 'ai.chat' %}
+<!-- ============ SIDEBAR ============ -->
+{% if not public_ai_chat %}
+<aside class="sidebar" id="sidebar">
+  <div class="brand">
+    <div class="brand-mark"><i class="bi bi-cpu"></i></div>
+    <div class="brand-text">
+      <span class="brand-name">AI Business Assistant</span>
+      <span class="brand-sub">Smart CRM for Real Estate</span>
+    </div>
+  </div>
+
+ <nav class="nav-menu">
+
+    <a href="{{ url_for('dashboard.dashboard_home') }}"
+       class="nav-item {% if request.blueprint == 'dashboard' %}active{% endif %}">
+        <i class="bi bi-grid-1x2-fill"></i>
+        <span>Dashboard</span>
+    </a>
+
+    <a href="{{ url_for('customer.customer_list') }}"
+       class="nav-item {% if request.blueprint == 'customer' %}active{% endif %}">
+        <i class="bi bi-people-fill"></i>
+        <span>Customers</span>
+    </a>
+
+    <a href="{{ url_for('property.property_list') }}"
+       class="nav-item {% if request.blueprint == 'property' %}active{% endif %}">
+         <i class="bi bi-buildings-fill"></i>
+         <span>Properties</span>
+    </a>
+
+    <a href="{{ url_for('lead.lead_list') }}"
+       class="nav-item {% if request.blueprint == 'lead' %}active{% endif %}">
+         <i class="bi bi-person-lines-fill"></i>
+         <span>Leads</span>
+    </a>
+    
+    <a href="{{ url_for('ai.dashboard') }}"
+       class="nav-item {% if request.endpoint == 'ai.dashboard' %}active{% endif %}">
+        <i class="bi bi-stars"></i>
+        <span>AI Assistant</span>
+    </a>
+
+    <a href="#">
+        <i class="bi bi-telephone-fill"></i>
+        <span>Call History</span>
+    </a>
+
+    <a href="#">
+        <i class="bi bi-bar-chart-fill"></i>
+        <span>Reports</span>
+    </a>
+
+    <a href="#">
+        <i class="bi bi-gear-fill"></i>
+        <span>Settings</span>
+    </a>
+
+ 
+
+</nav>
+
+  <div class="sidebar-foot">
+    <a href="{{ url_for('auth.logout') }}" class="nav-item logout"><i class="bi bi-box-arrow-right"></i><span>Logout</span></a>
+  </div>
+</aside>
+
+<div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+{% endif %}
+
+<!-- ============ MAIN ============ -->
+<main class="main-area {% if public_ai_chat %}public-ai-main{% endif %}">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="icon-btn d-lg-none" id="menuToggle" aria-label="Toggle menu"><i class="bi bi-list"></i></button>
+      <div>
+        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        <p class="page-sub">{% block page_sub %}Welcome back, {{ current_user.full_name if current_user.is_authenticated else 'Rakesh' }} <span class="wave">👋</span>{% endblock %}</p>
+      </div>
+    </div>
+
+    {% if not public_ai_chat %}
+    <div class="topbar-right">
+      <div class="search-box">
+        <i class="bi bi-search"></i>
+        <input type="text" placeholder="Search customers, properties…">
+        <kbd>⌘K</kbd>
+      </div>
+    
+
+      <div class="dropdown-wrap">
+        <button class="icon-btn" id="bellBtn" aria-label="Notifications">
+          <i class="bi bi-bell-fill"></i>
+          <span class="badge-dot">3</span>
+        </button>
+        <div class="dropdown-panel" id="bellPanel">
+          <div class="dropdown-title">Notifications</div>
+          <div class="dropdown-item"><i class="bi bi-person-check text-purple"></i> New lead assigned to you</div>
+          <div class="dropdown-item"><i class="bi bi-robot text-cyan"></i> AI closed 4 conversations</div>
+          <div class="dropdown-item"><i class="bi bi-telephone text-amber"></i> Missed call from Priya Mehta</div>
+        </div>
+      </div>
+
+      <div class="dropdown-wrap">
+        <button class="profile-btn" id="profileBtn">
+          <img
+              src="{{ url_for('static', filename='uploads/profiles/' + current_user.profile_picture) if current_user.profile_picture else 'https://i.pravatar.cc/64?img=13' }}"
+              alt="Profile Picture"
+          >
+          <span class="profile-info d-none d-md-flex">
+            <strong>{{ current_user.full_name if current_user.is_authenticated else 'Rakesh Reddy' }}</strong>
+            <small>Admin</small>
+          </span>
+          <i class="bi bi-chevron-down"></i>
+        </button>
+        <div class="dropdown-panel" id="profilePanel">
+          <a href="/profile/" class="dropdown-item"><i class="bi bi-person"></i> My Profile</a>
+          <div class="dropdown-item"><i class="bi bi-gear"></i> Account Settings</div>
+          <a href="{{ url_for('auth.logout') }}" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Sign out</a>
+        </div>
+      </div>
+        </div>
+    {% endif %}
+  </header>
+
+  <!-- Page content -->
+  {% block content %}{% endblock %}
+
+  <footer class="footer">
+    <span>© 2026 AI Business Assistant. All rights reserved.</span>
+    <span>Version 2.0</span>
+  </footer>
+
+</main>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

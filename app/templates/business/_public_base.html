@@ -1,0 +1,94 @@
+{% from "business/_icons.html" import icon %}
+{# Standalone public layout. Deliberately does NOT extend the CRM base.html. #}
+{% set home_url = url_for('public_site.home', business_id=business.id) %}
+{% set page_description = (business.description or ('Browse available properties from ' ~ business.business_name ~ ' and get instant help from our AI assistant.'))|striptags|truncate(155, True, '…') %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ business.business_name }} | Properties &amp; AI Assistant{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ page_description }}{% endblock %}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="{{ business.business_name }} | Properties &amp; AI Assistant">
+  <meta property="og:description" content="{{ page_description }}">
+  <meta name="theme-color" content="#15130f">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/business-public.css') }}">
+  <script>document.documentElement.classList.add('js');</script>
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="nav" id="nav">
+    <nav class="nav__inner container" aria-label="Main navigation">
+      <a class="brand" href="{{ home_url }}" aria-label="{{ business.business_name }} home">
+        <span class="brand__mark" aria-hidden="true">{{ business.business_name[:1]|upper }}</span>
+        <span class="brand__name">{{ business.business_name }}</span>
+      </a>
+
+      <button class="nav__toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="navMenu" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="nav__menu" id="navMenu">
+        <ul class="nav__links">
+          <li><a href="{{ home_url }}#home">Home</a></li>
+          <li><a href="{{ home_url }}#about">About</a></li>
+          <li><a href="{{ home_url }}#properties">Properties</a></li>
+          <li><a href="{{ home_url }}#ai">AI Assistant</a></li>
+          <li><a href="{{ home_url }}#contact">Contact</a></li>
+        </ul>
+        <a class="btn btn--accent btn--sm nav__cta" href="{{ home_url }}#ai">
+          {{ icon('spark', 16) }} Talk to AI
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="container footer__grid">
+      <div class="footer__brand">
+        <a class="brand" href="{{ home_url }}">
+          <span class="brand__mark" aria-hidden="true">{{ business.business_name[:1]|upper }}</span>
+          <span class="brand__name">{{ business.business_name }}</span>
+        </a>
+        {% if business.business_type %}<p class="footer__muted">{{ business.business_type }}</p>{% endif %}
+      </div>
+
+      <div>
+        <h2 class="footer__title">Explore</h2>
+        <ul class="footer__list">
+          <li><a href="{{ home_url }}#about">About</a></li>
+          <li><a href="{{ home_url }}#properties">Properties</a></li>
+          <li><a href="{{ url_for('ai.chat', business_id=business.id) }}">Chat with AI</a></li>
+          <li><a href="{{ url_for('ai.call', business_id=business.id) }}">Talk to AI</a></li>
+        </ul>
+      </div>
+
+      {% if business.phone or business.email or business.address %}
+      <div>
+        <h2 class="footer__title">Contact</h2>
+        <ul class="footer__list">
+          {% if business.phone %}<li><a href="tel:{{ business.phone|replace(' ', '') }}">{{ business.phone }}</a></li>{% endif %}
+          {% if business.email %}<li><a href="mailto:{{ business.email }}">{{ business.email }}</a></li>{% endif %}
+          {% if business.address %}<li class="footer__muted">{{ business.address }}</li>{% endif %}
+        </ul>
+      </div>
+      {% endif %}
+    </div>
+    <div class="container footer__bottom">
+      <p>© {{ current_year }} {{ business.business_name }}. All rights reserved.</p>
+      <p class="footer__muted">Powered by AI Business Assistant</p>
+    </div>
+  </footer>
+
+  <script src="{{ url_for('static', filename='js/business-public.js') }}" defer></script>
+</body>
+</html>

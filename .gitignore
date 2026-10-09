@@ -1,0 +1,30 @@
+
+.env
+.env.*
+!.env.example
+
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+.idea/
+.vscode/
+
+*.log
+.DS_Store
+Thumbs.db
+
+instance/
+*.sqlite
+*.sqlite3
+
+
+# Audio test files
+*.wav
+
+# Python test cache
+.pytest_cache/
+
+app/static/uploads/profiles/

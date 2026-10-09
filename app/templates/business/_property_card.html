@@ -1,0 +1,38 @@
+{% from "business/_icons.html" import icon %}
+{# Expects: p (Property), business, idx (int, for stagger) #}
+{% set img = property_image_url(p) %}
+{% set detail_url = url_for('public_site.property_detail', business_id=business.id, property_id=p.id) %}
+<article class="pcard reveal" style="--i: {{ idx|default(0) }}"
+         data-city="{{ p.city or '' }}" data-type="{{ p.property_type or '' }}"
+         data-area="{{ p.area or '' }}" data-beds="{{ p.bedrooms or 0 }}"
+         data-price="{{ p.price or 0 }}">
+  <a class="pcard__media" href="{{ detail_url }}" tabindex="-1">
+    <span class="placeholder">{{ icon('home', 40) }}<small>{{ p.property_type }}</small></span>
+    {% if img %}
+      <img src="{{ img }}" alt="{{ p.title }}{% if p.city %} – {{ p.property_type }} in {{ p.city }}{% endif %}" loading="lazy" decoding="async" data-fade>
+    {% endif %}
+    <span class="pcard__badge">{{ p.property_type }}</span>
+  </a>
+
+  <div class="pcard__body">
+    <p class="pcard__price">{{ p.short_price }}</p>
+    <h3 class="pcard__title"><a href="{{ detail_url }}">{{ p.title }}</a></h3>
+    {% if p.city or p.area %}
+      <p class="pcard__loc">{{ icon('pin', 16) }}<span>{{ [p.area, p.city]|select|join(', ') }}</span></p>
+    {% endif %}
+
+    {% if p.bedrooms is not none or p.bathrooms is not none or p.sqft %}
+    <ul class="pcard__facts" aria-label="Property facts">
+      {% if p.bedrooms is not none %}<li>{{ icon('bed', 16) }}{{ p.bedrooms }} <span>Beds</span></li>{% endif %}
+      {% if p.bathrooms is not none %}<li>{{ icon('bath', 16) }}{{ p.bathrooms }} <span>Baths</span></li>{% endif %}
+      {% if p.sqft %}<li>{{ icon('area', 16) }}{{ "{:,}".format(p.sqft) }} <span>sqft</span></li>{% endif %}
+    </ul>
+    {% endif %}
+
+    {% if p.description %}<p class="pcard__desc">{{ p.description|truncate(110, True, '…') }}</p>{% endif %}
+
+    <a class="pcard__cta" href="{{ detail_url }}" aria-label="View details for {{ p.title }}">
+      View Details {{ icon('arrow', 16) }}
+    </a>
+  </div>
+</article>

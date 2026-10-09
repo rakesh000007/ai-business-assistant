@@ -1,0 +1,281 @@
+{% extends "layout/base.html" %}
+
+<!-- =========================
+     Page Title
+========================= -->
+{% block title %}Add Lead{% endblock %}
+
+<!-- =========================
+     Page Header
+========================= -->
+{% block page_title %}
+Lead Management
+{% endblock %}
+
+{% block page_sub %}
+Create a new lead and assign customer requirements.
+{% endblock %}
+
+<!-- =========================
+     Lead CSS
+========================= -->
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lead.css') }}">
+{% endblock %}
+
+<!-- =========================
+     Main Content
+========================= -->
+{% block content %}
+
+<section class="glass-card page-panel">
+
+    <!-- =========================
+         Page Heading
+    ========================= -->
+    <div class="page-head">
+
+        <div>
+            <h2>Add New Lead</h2>
+            <p>Create a new sales lead for your CRM.</p>
+        </div>
+
+        <a href="{{ url_for('lead.lead_list') }}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i>
+            Back to Leads
+        </a>
+
+    </div>
+
+    <!-- =========================
+         Lead Form
+    ========================= -->
+
+    <form method="POST">
+
+        <div class="row g-4">
+
+            <!-- =========================
+                 Customer
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-person"></i>
+                    Customer
+                </label>
+
+                <select
+                    name="customer_id"
+                    class="form-select"
+                    required>
+
+                    <option value="">Select Customer</option>
+
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}">
+                        {{ customer.full_name }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <!-- =========================
+                 Property Type
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-buildings"></i>
+                    Property Type
+                </label>
+
+                <select
+                    name="property_type"
+                    class="form-select"
+                    required>
+
+                    <option value="">Select Property Type</option>
+                    <option value="Apartment">Apartment</option>
+                    <option value="House">House</option>
+                    <option value="Villa">Villa</option>
+                    <option value="Plot">Plot</option>
+                    <option value="Commercial">Commercial</option>
+
+                </select>
+
+            </div>
+
+            <!-- =========================
+                 Budget
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-cash-stack"></i>
+                    Budget (₹)
+                </label>
+
+                <input
+                    type="number"
+                    name="budget"
+                    class="form-control"
+                    placeholder="Enter Budget"
+                    required>
+
+            </div>
+
+            <!-- =========================
+                 Preferred City
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-geo-alt"></i>
+                    Preferred City
+                </label>
+
+                <input
+                    type="text"
+                    name="preferred_city"
+                    class="form-control"
+                    placeholder="Enter Preferred City"
+                    required>
+
+            </div>
+
+            <!-- =========================
+                 Bedrooms
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-door-open"></i>
+                    Bedrooms
+                </label>
+
+                <input
+                    type="number"
+                    name="bedrooms"
+                    class="form-control"
+                    placeholder="No. of Bedrooms"
+                    min="1">
+
+            </div>
+
+            <!-- =========================
+                 Purpose
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-bullseye"></i>
+                    Purpose
+                </label>
+
+                <select
+                    name="purpose"
+                    class="form-select"
+                    required>
+
+                    <option value="">Select Purpose</option>
+                    <option value="Buy">Buy</option>
+                    <option value="Rent">Rent</option>
+                    <option value="Lease">Lease</option>
+
+                </select>
+
+            </div>
+
+            <!-- =========================
+                 Priority
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-flag"></i>
+                    Priority
+                </label>
+
+                <select
+                    name="priority"
+                    class="form-select">
+
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+
+                </select>
+
+            </div>
+
+            <!-- =========================
+                 Follow-up Date
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-calendar-event"></i>
+                    Follow-up Date
+                </label>
+
+                <input
+                    type="date"
+                    name="follow_up_date"
+                    class="form-control">
+
+            </div>
+
+            <!-- =========================
+                 Notes
+            ========================= -->
+            <div class="col-12">
+
+                <label class="form-label">
+                    <i class="bi bi-journal-text"></i>
+                    Notes
+                </label>
+
+                <textarea
+                    name="notes"
+                    rows="5"
+                    class="form-control"
+                    placeholder="Enter additional notes about this lead..."></textarea>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+             Buttons
+        ========================= -->
+
+        <div class="d-flex justify-content-end gap-3 mt-4">
+
+            <a
+                href="{{ url_for('lead.lead_list') }}"
+                class="btn btn-outline-light">
+
+                <i class="bi bi-x-circle"></i>
+                Cancel
+
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary">
+
+                <i class="bi bi-save"></i>
+                Save Lead
+
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

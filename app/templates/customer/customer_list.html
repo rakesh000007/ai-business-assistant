@@ -1,0 +1,321 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Customers{% endblock %}
+{% block page_title %}Customers{% endblock %}
+{% block page_sub %}
+Welcome back, {{ current_user.full_name if current_user.is_authenticated else 'Rakesh' }} <span class="wave">👋</span>
+{% endblock %}
+
+{% block content %}
+
+<section class="glass-card page-panel">
+
+  <div class="page-head">
+    <div>
+      <h2>All Customers</h2>
+      <p>Manage and view all your customers</p>
+    </div>
+    <a href="{{ url_for('customer.add_customer') }}" class="btn-primary-glow">
+      <i class="bi bi-plus-lg"></i> Add Customer
+    </a>
+  </div>
+
+ <div class="toolbar">
+
+    <div class="toolbar-left">
+
+        <div class="search-box table-search">
+            <i class="bi bi-search"></i>
+            <input
+                type="text"
+                id="customerSearch"
+                placeholder="Search customers..."
+            >
+        </div>
+
+        <select
+           id="sourceFilter"
+           class="filter-select"
+           onchange="window.location=this.value">
+
+            <option
+              value="{{ url_for('customer.customer_list',
+                status=status,
+                source='all',
+                city=city,
+                sort=sort) }}"
+              {% if source == 'all' %}selected{% endif %}>
+              All Sources
+            </option>
+
+            {% for s in sources %}
+            <option
+              value="{{ url_for(
+                 'customer.customer_list',
+                  status=status,
+                  source=s,
+                  city=city,
+                  sort=sort) }}"
+              {% if source == s %}selected{% endif %}>
+              {{ s }}
+            </option>
+           {% endfor %}
+
+        </select>
+
+        <select
+          id="cityFilter"
+          class="filter-select"
+          onchange="window.location=this.value">
+
+          <option
+             value="{{ url_for(
+               'customer.customer_list',
+                status=status,
+                source=source,
+                city='all',
+                sort=sort
+             ) }}"
+             {% if city == 'all' %}selected{% endif %}>
+             All Cities
+          </option>
+
+          {% for c in cities %}
+          <option
+             value="{{ url_for(
+               'customer.customer_list',
+                status=status,
+                source=source,
+                city=c,
+                sort=sort
+              ) }}"
+              {% if city == c %}selected{% endif %}>
+              {{ c }}
+          </option>
+          {% endfor %}
+
+        </select>
+
+        <select
+          id="sortFilter"
+          class="filter-select"
+          onchange="window.location=this.value">
+
+          <option
+             value="{{ url_for('customer.customer_list',
+                          status=status,
+                          source=source,
+                          city=city,
+                          sort='newest') }}"
+             {% if sort == 'newest' %}selected{% endif %}>
+             Newest
+          </option>
+
+           <option
+             value="{{ url_for('customer.customer_list',
+                          status=status,
+                          source=source,
+                          city=city,
+                          sort='oldest') }}"
+             {% if sort == 'oldest' %}selected{% endif %}>
+             Oldest
+          </option>
+
+          <option
+             value="{{ url_for('customer.customer_list',
+                          status=status,
+                          source=source,
+                          city=city,
+                          sort='name_asc') }}"
+             {% if sort == 'name_asc' %}selected{% endif %}>
+             Name (A–Z)
+          </option>
+
+          <option
+             value="{{ url_for('customer.customer_list',
+                          status=status,
+                          source=source,
+                          city=city,
+                          sort='name_desc') }}"
+             {% if sort == 'name_desc' %}selected{% endif %}>
+             Name (Z–A)
+          </option>
+
+        </select>
+
+    </div>
+
+</div>
+<!-- Status Pills -->
+
+    {% set status = request.args.get('status', 'all') %}
+    <div class="filter-pills">
+      {% for key, label in 
+        [
+        ('all', 'All'),
+        ('New Lead', 'New Lead'),
+        ('Contacted', 'Contacted'),
+        ('Site Visit Scheduled', 'Site Visit'),
+        ('Negotiation', 'Negotiation'),
+        ('Closed', 'Closed'),
+        ('Lost', 'Lost')
+        ] 
+      %}
+      <a href="{{ url_for(
+          'customer.customer_list',
+           status=key,
+           source=source,
+           city=city,
+           sort=sort
+        ) }}"
+          class="pill {{ 'active' if status == key else '' }}">
+
+           {% if key == 'all' %}
+               {{ label }} ({{ status_counts['all'] }})
+           {% elif status_counts[key] > 0 %}
+               {{ label }} ({{ status_counts[key] }})
+           {% else %}
+               {{ label }}
+           {% endif %}
+      </a>
+      {% endfor %}
+    </div>
+
+  <div class="table-wrap">
+    <table class="modern-table">
+      <thead>
+        <tr>
+          <th>Name <i class="bi bi-caret-down-fill sort-caret"></i></th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>City</th>
+          <th>Source</th>
+          <th>Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers|default([]) %}
+        <tr>
+          <td>
+               <span class="avatar avatar-purple">
+                  {{ c.full_name[:2]|upper }}
+              </span>
+                  {{ c.full_name }}
+          </td>
+          <td>{{ c.phone }}</td>
+          <td>{{ c.email }}</td>
+          <td>{{ c.city }}</td>
+          <td>{{ c.source }}</td>
+          <td>
+            <span class="status
+            {% if c.status == 'New Lead' %}new-lead
+            {% elif c.status == 'Contacted' %}contacted
+            {% elif c.status == 'Site Visit Scheduled' %}site-visit
+            {% elif c.status == 'Negotiation' %}negotiation
+            {% elif c.status == 'Closed' %}closed
+            {% elif c.status == 'Lost' %}lost
+            {% endif %}">
+               {{ c.status }}
+            </span>
+          <td class="text-end">
+            <div class="row-actions">
+       
+              <a href="{{ url_for('customer.edit_customer', customer_id=c.id) }}" class="row-icon" title="Edit"><i class="bi bi-pencil"></i></a>
+              <button type="button" class="row-icon danger" title="Delete"
+                      data-bs-toggle="modal" data-bs-target="#deleteModal"
+                      data-delete-url="{{ url_for('customer.delete_customer', customer_id=c.id) }}"
+                      data-customer-name="{{ c.full_name }}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-muted text-center py-5">No customers found. <a href="{{ url_for('customer.add_customer') }}" class="view-all">Add your first customer</a>.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+ {% if pagination is defined and pagination %}
+  <div class="table-footer">
+    <span class="entries-info">Showing {{ pagination.first }}–{{ pagination.last }} of {{ pagination.total }} entries</span>
+    <nav class="pagination-nav">
+      <a class="page-btn {{ 'disabled' if not pagination.has_prev }}"
+         href="{{ url_for(
+             'customer.customer_list',
+             page=pagination.prev_num,
+             status=status,
+             source=source
+          )  if pagination.has_prev else '#' }}"
+        <i class="bi bi-chevron-left"></i>
+      </a>
+      {% for p in pagination.iter_pages() %}
+        {% if p %}
+        <a class="page-btn {{ 'active' if p == pagination.page }}"
+           href="{{ url_for(
+               'customer.customer_list',
+                page=p,
+                status=status,
+                source=source
+           ) }}"
+        {% else %}
+        <span class="page-ellipsis">…</span>
+        {% endif %}
+      {% endfor %}
+      <a class="page-btn {{ 'disabled' if not pagination.has_next }}"
+         href="{{ url_for(
+            'customer.customer_list',
+             page=pagination.next_num,
+             status=status,
+             source=source
+         ) if pagination.has_next else '#' }}"
+        <i class="bi bi-chevron-right"></i>
+      </a>
+    </nav>
+  </div>
+  {% endif %}
+
+</section>
+
+<!-- Delete confirmation modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-modal">
+      <div class="modal-body text-center py-4">
+        <div class="modal-warn-icon"><i class="bi bi-exclamation-triangle-fill"></i></div>
+        <h3>Delete customer?</h3>
+        <p class="text-muted">This will permanently remove <b id="deleteCustomerName">this customer</b> from your CRM.</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancel</button>
+          <form id="deleteForm" method="POST" action="">
+            <button type="submit" class="btn-danger-glow">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Wire the delete modal to the row that triggered it
+  document.getElementById('deleteModal').addEventListener('show.bs.modal', function (event) {
+    const btn = event.relatedTarget;
+    document.getElementById('deleteCustomerName').textContent = btn.getAttribute('data-customer-name');
+    document.getElementById('deleteForm').setAttribute('action', btn.getAttribute('data-delete-url'));
+  });
+
+  // Client-side quick filter on the visible rows
+  document.getElementById('customerSearch')?.addEventListener('input', function (e) {
+    const term = e.target.value.toLowerCase();
+    document.querySelectorAll('.modern-table tbody tr').forEach((row) => {
+      row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+  });
+</script>
+{% endblock %}

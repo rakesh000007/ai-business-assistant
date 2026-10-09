@@ -1,0 +1,609 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Profile{% endblock %}
+{% block page_title %}Profile{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 24px;
+        margin-top: 28px;
+    }
+
+    .profile-card {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        border-radius: 20px;
+        padding: 28px;
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+    }
+    .personal-info-card {
+        align-self: start;
+    }
+
+    .profile-update-form {
+        display: contents;
+    }
+    .profile-photo-section {
+        text-align: center;
+    }
+
+    .profile-photo {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #7c5cfc;
+        margin-bottom: 18px;
+    }
+
+    .profile-photo-section h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #fff;
+    }
+
+    .profile-photo-section p {
+        margin-top: 7px;
+        color: rgba(255, 255, 255, 0.55);
+        word-break: break-word;
+    }
+
+    .profile-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(124, 92, 252, 0.14);
+        border: 1px solid rgba(124, 92, 252, 0.25);
+        color: #cfc5ff;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .change-photo-btn {
+        display: inline-block;
+        margin-top: 18px;
+        padding: 10px 18px;
+        border-radius: 10px;
+        background: rgba(124, 92, 252, 0.15);
+        border: 1px solid rgba(124, 92, 252, 0.35);
+        color: #fff;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .change-photo-btn:hover {
+        background: rgba(124, 92, 252, 0.25);
+    }
+
+    .section-title {
+        margin-bottom: 22px;
+    }
+
+    .section-title h2 {
+        margin: 0;
+        font-size: 20px;
+        color: #fff;
+    }
+
+    .section-title p {
+        margin: 6px 0 0;
+        color: rgba(255, 255, 255, 0.55);
+    }
+
+    .profile-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+    }
+
+    .form-group.full {
+        grid-column: 1 / -1;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.68);
+    }
+
+    .profile-input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.10);
+        background: rgba(255, 255, 255, 0.05);
+        color: #fff;
+        outline: none;
+        font-family: inherit;
+    }
+
+    .profile-input::placeholder {
+        color: rgba(255, 255, 255, 0.35);
+    }
+
+    .profile-input:focus {
+        border-color: #7c5cfc;
+        box-shadow: 0 0 0 3px rgba(124, 92, 252, 0.12);
+    }
+
+    .profile-input[readonly] {
+        opacity: 0.75;
+        cursor: not-allowed;
+    }
+
+    textarea.profile-input {
+        min-height: 110px;
+        resize: vertical;
+    }
+
+.save-profile-btn,
+.change-password-btn {
+    margin-top: 22px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #7c5cfc, #6847e8);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.save-profile-btn {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+    .save-profile-btn:hover,
+    .change-password-btn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+    }
+
+    .security-card {
+        grid-column: 1 / -1;
+    }
+
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .profile-input {
+        padding-right: 46px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        border: none;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.55);
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .password-toggle:hover {
+        color: #fff;
+    }
+
+    .security-note {
+        margin-top: 16px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .account-meta {
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        text-align: left;
+    }
+
+    .account-meta-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 7px 0;
+        font-size: 12px;
+    }
+
+    .account-meta-item span:first-child {
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .account-meta-item span:last-child {
+        color: rgba(255, 255, 255, 0.75);
+        text-align: right;
+    }
+
+    @media (max-width: 900px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .security-card {
+            grid-column: auto;
+        }
+
+        .profile-form {
+            grid-template-columns: 1fr;
+        }
+
+        .form-group.full {
+            grid-column: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>Profile</h1>
+        <p>Manage your personal and business information.</p>
+    </div>
+</div>
+
+<div class="profile-grid">
+
+    <!-- ==========================
+         PERSONAL PROFILE
+    =========================== -->
+    <div class="profile-card profile-photo-section">
+
+        <img
+            src="{{ url_for('static', filename='uploads/profiles/' + user.profile_picture) if user.profile_picture else 'https://i.pravatar.cc/150?img=13' }}"
+            alt="Profile Picture"
+            class="profile-photo"
+        >
+
+        <h2>{{ user.full_name }}</h2>
+
+        <p>{{ user.email }}</p>
+
+
+
+        <form
+            action="{{ url_for('profile.upload_photo') }}"
+            method="POST"
+            enctype="multipart/form-data"
+            id="photoUploadForm"
+        >
+
+            <label class="change-photo-btn">
+                <i class="bi bi-camera"></i>
+                Change Photo
+
+                <input
+                    type="file"
+                    name="profile_picture"
+                    hidden
+                    accept="image/png,image/jpeg,image/webp"
+                    onchange="document.getElementById('photoUploadForm').submit();"
+                >
+            </label>
+
+        </form>
+
+
+
+    </div>
+    <form
+        action="{{ url_for('profile.update_profile') }}"
+        method="POST"
+        class="profile-update-form"
+    >
+    <!-- ==========================
+         PERSONAL INFORMATION
+    =========================== -->
+    <div class="profile-card personal-info-card">
+
+        <div class="section-title">
+            <h2>Personal Information</h2>
+            <p>Manage your account information.</p>
+        </div>
+
+        <div class="profile-form">
+
+            <div class="form-group">
+                <label>Full Name</label>
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="full_name"
+                    value="{{ user.full_name }}"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+
+                <input
+                    type="email"
+                    class="profile-input"
+                    value="{{ user.email }}"
+                    readonly
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Phone Number</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="phone"
+                    value="{{ user.phone or '' }}"
+                    placeholder="Enter your phone number"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Role</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    value="{{ user.role|title }}"
+                    readonly
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Member Since</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    value="{{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}"
+                    readonly
+                >
+            </div>
+
+        </div>
+
+    </div>
+
+
+    
+    <!-- ==========================
+         BUSINESS INFORMATION
+    =========================== -->
+    <div class="profile-card security-card">
+
+        <div class="section-title">
+            <h2>Business Information</h2>
+            <p>Manage the information used by your AI business assistant.</p>
+        </div>
+
+
+
+        <div class="profile-form">
+
+            <div class="form-group">
+                <label>Company / Business Name</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="business_name"
+                    value="{{ business.business_name if business else '' }}"
+                    placeholder="Enter your company or business name"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Business Type</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="business_type"
+                    value="{{ business.business_type if business else '' }}"
+                    placeholder="Enter your business type"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Owner Name</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="owner_name"
+                    value="{{ business.owner_name if business else '' }}"
+                    placeholder="Enter the business owner's name"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Business Phone</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="business_phone"
+                    value="{{ business.phone or '' }}"
+                    placeholder="Enter your business phone number"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Business Email</label>
+
+                <input
+                    type="email"
+                    class="profile-input"
+                    name="business_email"
+                    value="{{ business.email if business else '' }}"
+                    placeholder="Enter your business email"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Business Address</label>
+
+                <input
+                    type="text"
+                    class="profile-input"
+                    name="business_address"
+                    value="{{ business.address or '' }}"
+                    placeholder="Enter your business address"
+                >
+            </div>
+
+            <div class="form-group full">
+                <label>Business Description</label>
+
+                <textarea
+                    class="profile-input"
+                    name="business_description"
+                    placeholder="Tell customers about your business..."
+                >{{ business.description or '' }}</textarea>
+            </div>
+
+        </div>
+        <button type="submit" class="save-profile-btn">
+            <i class="bi bi-check2"></i>
+            Save Changes
+        </button>
+
+      </div>
+    </form>
+
+<!-- ==========================
+     SECURITY
+=========================== -->
+<div class="profile-card security-card">
+
+    <div class="section-title">
+        <h2>Security</h2>
+        <p>Manage your account password and security.</p>
+    </div>
+
+    <form
+        action="{{ url_for('profile.change_password') }}"
+        method="POST"
+    >
+
+        <div class="profile-form">
+
+            <div class="form-group full">
+                <label>Current Password</label>
+
+                <div class="password-wrapper">
+                    <input
+                        type="password"
+                        class="profile-input"
+                        name="current_password"
+                        placeholder="Enter your current password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="togglePassword(this)"
+                        aria-label="Show password"
+                    >
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>New Password</label>
+
+                <div class="password-wrapper">
+                    <input
+                        type="password"
+                        class="profile-input"
+                        name="new_password"
+                        placeholder="Enter new password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="togglePassword(this)"
+                        aria-label="Show password"
+                    >
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm New Password</label>
+
+                <div class="password-wrapper">
+                    <input
+                        type="password"
+                        class="profile-input"
+                        name="confirm_password"
+                        placeholder="Confirm new password"
+                        required
+                    >
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        onclick="togglePassword(this)"
+                        aria-label="Show password"
+                    >
+                        <i class="bi bi-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <button type="submit" class="change-password-btn">
+            <i class="bi bi-shield-lock"></i>
+            Change Password
+        </button>
+
+    </form>
+
+    <p class="security-note">
+        Use a strong password that you don't reuse on other websites.
+    </p>
+
+</div>
+
+
+
+ 
+
+<script>
+function togglePassword(button) {
+    const input = button.parentElement.querySelector("input");
+    const icon = button.querySelector("i");
+
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove("bi-eye");
+        icon.classList.add("bi-eye-slash");
+    } else {
+        input.type = "password";
+        icon.classList.remove("bi-eye-slash");
+        icon.classList.add("bi-eye");
+    }
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        AI {{ business.business_type or 'Business' }} Call Assistant
+    </title>
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<!-- Main Application CSS -->
+<link rel="stylesheet"
+      href="{{ url_for('static', filename='css/dashboard.css') }}">
+
+    <!-- AI Call CSS -->
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/ai-call.css') }}">
+</head>
+
+<body>
+
+    <!-- Business ID used by call.js -->
+    <input type="hidden"
+           id="businessId"
+           value="{{ business.id }}">
+
+    <main class="call-page">
+
+        <section class="call-assistant-shell">
+
+            <!-- Business Header -->
+            <div class="business-header">
+
+                <div class="business-icon">
+                    <i class="bi bi-robot"></i>
+                </div>
+
+                <div>
+                    <h1>
+                        AI {{ business.business_type or 'Business' }} Call Assistant
+                    </h1>
+
+                    <p>
+                        Welcome to {{ business.business_name }}
+                        <span class="wave">👋</span>
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- Online Status -->
+            <div class="call-status">
+
+                <span class="online-chip">
+                    <span class="pulse-dot"></span>
+                    AI Call Assistant Online
+                </span>
+
+            </div>
+
+
+            <!-- Main Call Area -->
+            <div class="call-main">
+
+                <div class="call-orb" id="callOrb">
+                    <i class="bi bi-telephone-fill"></i>
+                </div>
+
+
+                <h2 id="callTitle">
+                    AI Voice Assistant
+                </h2>
+
+
+                <p id="callStatus">
+                    Click the button below to start the conversation.
+                </p>
+
+
+                <!-- Conversation -->
+                <div class="voice-transcript"
+                     id="voiceTranscript">
+
+                    <div class="transcript-label">
+                        <i class="bi bi-chat-square-text"></i>
+                        Conversation
+                    </div>
+
+                    <div id="transcriptContent">
+
+                        <span class="transcript-placeholder">
+                            Your conversation will appear here...
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Start Call -->
+                <button type="button"
+                        class="start-call-btn"
+                        id="startCallBtn">
+
+                    <i class="bi bi-mic-fill"></i>
+
+                    <span>
+                        Start AI Call
+                    </span>
+
+                </button>
+
+
+                <!-- End Call -->
+                <button type="button"
+                        class="end-call-btn"
+                        id="endCallBtn"
+                        style="display: none;">
+
+                    <i class="bi bi-telephone-x-fill"></i>
+
+                    <span>
+                        End Call
+                    </span>
+
+                </button>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- AI Call JavaScript -->
+    <script src="{{ url_for('static', filename='js/call.js') }}"></script>
+
+</body>
+
+</html>

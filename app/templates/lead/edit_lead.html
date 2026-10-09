@@ -1,0 +1,380 @@
+{% extends "layout/base.html" %}
+
+<!-- =========================
+     Page Title
+========================= -->
+{% block title %}Add Lead{% endblock %}
+
+<!-- =========================
+     Page Header
+========================= -->
+{% block page_title %}
+Lead Management
+{% endblock %}
+
+{% block page_sub %}
+Create a new lead and assign customer requirements.
+{% endblock %}
+
+<!-- =========================
+     Lead CSS
+========================= -->
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lead.css') }}">
+{% endblock %}
+
+<!-- =========================
+     Main Content
+========================= -->
+{% block content %}
+
+<section class="glass-card page-panel">
+
+    <!-- =========================
+         Page Heading
+    ========================= -->
+    <div class="page-head">
+
+        <div>
+            <h2>Edit Lead</h2>
+            <p>Update lead information and customer requirements.</p>
+        </div>
+
+        <a href="{{ url_for('lead.lead_list') }}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left"></i>
+            Back to Leads
+        </a>
+
+    </div>
+
+    <!-- =========================
+         Lead Form
+    ========================= -->
+
+    <form method="POST">
+
+        <div class="row g-4">
+
+            <!-- =========================
+                 Customer
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-person"></i>
+                    Customer
+                </label>
+
+                <select
+                    name="customer_id"
+                    class="form-select"
+                    required>
+
+                    <option value="">Select Customer</option>
+
+                    {% for customer in customers %}
+                    <option value="{{ customer.id }}" 
+                    {% if  customer.id == lead.customer_id %}selected{% endif %}>
+                         {{ customer.full_name }}
+                    </option>
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+            <!-- =========================
+                 Property Type
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-buildings"></i>
+                    Property Type
+                </label>
+
+            <select
+                  name="property_type"
+                  class="form-select"
+                  required>
+
+                 <option value="">Select Property Type</option>
+
+                 <option value="Apartment"
+                    {% if lead.property_type == "Apartment" %}selected{% endif %}>
+                    Apartment
+                 </option>
+
+                 <option value="House"
+                    {% if lead.property_type == "House" %}selected{% endif %}>
+                    House
+                </option>
+
+                <option value="Villa"
+                    {% if lead.property_type == "Villa" %}selected{% endif %}>
+                    Villa
+                </option>
+
+                <option value="Plot"
+                   {% if lead.property_type == "Plot" %}selected{% endif %}>
+                    Plot
+                </option>
+
+                <option value="Commercial"
+                    {% if lead.property_type == "Commercial" %}selected{% endif %}>
+                    Commercial
+                </option>
+
+            </select>
+
+            </div>
+
+            <!-- =========================
+                 Budget
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-cash-stack"></i>
+                    Budget (₹)
+                </label>
+
+               <input
+                 type="number"
+                 name="budget"
+                 class="form-control"
+                 placeholder="Enter Budget"
+                 value="{{ lead.budget }}"
+                 required>
+            </div>
+
+            <!-- =========================
+                 Preferred City
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-geo-alt"></i>
+                    Preferred City
+                </label>
+
+                <input
+                    type="text"
+                    name="preferred_city"
+                    class="form-control"
+                    placeholder="Enter Preferred City"
+                    value="{{ lead.preferred_city }}"
+                    required>
+
+            </div>
+
+            <!-- =========================
+                 Bedrooms
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-door-open"></i>
+                    Bedrooms
+                </label>
+
+                <input
+                    type="number"
+                    name="bedrooms"
+                    class="form-control"
+                    value="{{ lead.bedrooms }}"
+                    min="1">
+
+            </div>
+
+            <!-- =========================
+                 Purpose
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-bullseye"></i>
+                    Purpose
+                </label>
+
+                <select
+                  name="purpose"
+                  class="form-select"
+                  required>
+
+                  <option value="">Select Purpose</option>
+
+                  <option value="Buy"
+                     {% if lead.purpose == "Buy" %}selected{% endif %}>
+                     Buy
+                  </option>
+
+                  <option value="Rent"
+                     {% if lead.purpose == "Rent" %}selected{% endif %}>
+                     Rent
+                  </option>
+
+                  <option value="Lease"
+                     {% if lead.purpose == "Lease" %}selected{% endif %}>
+                     Lease
+                  </option>
+
+                </select>
+
+            </div>
+
+            <!-- =========================
+                 Priority
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-flag"></i>
+                    Priority
+                </label>
+
+                <select
+                  name="priority"
+                  class="form-select"
+                  required>
+                 <option value="High"
+                 {% if lead.priority == "High" %}selected{% endif %}>
+                 High
+                </option>
+
+                <option value="Medium"
+                   {% if lead.priority == "Medium" %}selected{% endif %}>
+                   Medium
+                   </option>
+
+                <option value="Low"
+                   {% if lead.priority == "Low" %}selected{% endif %}>
+                   Low
+                   </option>
+
+                </select>
+
+            </div>
+            <!-- =========================
+               Status
+              ========================= -->
+            <div class="col-md-6">
+
+               <label class="form-label">
+                  <i class="bi bi-diagram-3"></i>
+                  Status
+               </label>
+
+               <select
+                    name="status"
+                    class="form-select"
+                    required>
+
+                     <option value="New Lead"
+                        {% if lead.status == "New Lead" %}selected{% endif %}>
+                        New Lead
+                     </option>
+
+                    <option value="Qualified"
+                      {% if lead.status == "Qualified" %}selected{% endif %}>
+                      Qualified
+                    </option>
+
+                    <option value="Property Shared"
+                       {% if lead.status == "Property Shared" %}selected{% endif %}>
+                       Property Shared
+                    </option>
+
+                    <option value="Site Visit Scheduled"
+                       {% if lead.status == "Site Visit Scheduled" %}selected{% endif %}>
+                       Site Visit
+                   </option>
+
+                     <option value="Negotiation"
+                         {% if lead.status == "Negotiation" %}selected{% endif %}>
+                         Negotiation
+                     </option>
+
+                    <option value="Closed Won"
+                       {% if lead.status == "Closed Won" %}selected{% endif %}>
+                       Closed Won
+                     </option>
+
+                     <option value="Closed Lost"
+                        {% if lead.status == "Closed Lost" %}selected{% endif %}>
+                        Closed Lost
+                     </option>
+
+                 </select>
+
+            </div>
+
+            <!-- =========================
+                 Follow-up Date
+            ========================= -->
+            <div class="col-md-6">
+
+                <label class="form-label">
+                    <i class="bi bi-calendar-event"></i>
+                    Follow-up Date
+                </label>
+
+                <input
+                  type="date"
+                  name="follow_up_date"
+                  class="form-control"
+                  value="{{ lead.follow_up_date.strftime('%Y-%m-%d') if lead.follow_up_date else '' }}">
+
+            </div>
+
+            <!-- =========================
+                 Notes
+            ========================= -->
+            <div class="col-12">
+
+                <label class="form-label">
+                    <i class="bi bi-journal-text"></i>
+                    Notes
+                </label>
+
+                <textarea
+                  name="notes"
+                  class="form-control"
+                  rows="5"
+                  placeholder="Enter additional notes about this lead...">{{ lead.notes }}</textarea>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+             Buttons
+        ========================= -->
+
+        <div class="d-flex justify-content-end gap-3 mt-4">
+
+            <a
+                href="{{ url_for('lead.lead_list') }}"
+                class="btn btn-outline-light">
+
+                <i class="bi bi-x-circle"></i>
+                Cancel
+
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary">
+
+                <i class="bi bi-pencil-square"></i>
+                Update Lead
+
+            </button>
+
+        </div>
+
+    </form>
+
+</section>
+
+{% endblock %}

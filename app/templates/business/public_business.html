@@ -1,0 +1,261 @@
+{% extends "business/_public_base.html" %}
+{% from "business/_icons.html" import icon %}
+{% block body_class %}page-home{% endblock %}
+
+{% block content %}
+{% set chat_url = url_for('ai.chat', business_id=business.id) %}
+{% set call_url = url_for('ai.call', business_id=business.id) %}
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="home" aria-labelledby="hero-title">
+  <div class="hero__bg" aria-hidden="true" data-parallax="0.18">
+    <span class="hero__glow hero__glow--a"></span>
+    <span class="hero__glow hero__glow--b"></span>
+    <span class="hero__grid"></span>
+  </div>
+
+  <div class="container hero__inner">
+    <div class="hero__copy">
+      {% if business.business_type %}<p class="eyebrow hero__item" style="--d: 0">{{ business.business_type }}</p>{% endif %}
+      <h1 id="hero-title" class="hero__title hero__item" style="--d: 1">{{ business.business_name }}</h1>
+      <p class="hero__tagline hero__item" style="--d: 2">Discover properties that match your lifestyle.</p>
+      {% if business.description %}
+        <p class="hero__text hero__item" style="--d: 3">{{ business.description|truncate(220, True, '…') }}</p>
+      {% endif %}
+      <div class="hero__actions hero__item" style="--d: 4">
+        <a class="btn btn--light" href="#properties">Explore Properties {{ icon('arrow', 18) }}</a>
+        <a class="btn btn--glass" href="{{ chat_url }}">{{ icon('chat', 18) }} AI Chat</a>
+        <a class="btn btn--glass" href="{{ call_url }}">{{ icon('mic', 18) }} AI Voice</a>
+      </div>
+    </div>
+
+    {% if featured %}
+    {% set f_img = property_image_url(featured) %}
+    <a class="hero__card hero__item" style="--d: 5" href="{{ url_for('public_site.property_detail', business_id=business.id, property_id=featured.id) }}" aria-label="Latest listing: {{ featured.title }}">
+      <span class="hero__card-media">
+        <span class="placeholder">{{ icon('home', 44) }}</span>
+        {% if f_img %}<img src="{{ f_img }}" alt="{{ featured.title }}" data-fade>{% endif %}
+      </span>
+      <span class="hero__card-body">
+        <small>Latest listing</small>
+        <strong>{{ featured.title }}</strong>
+        <span class="hero__card-meta">
+          {% if featured.city %}{{ featured.city }} · {% endif %}{{ featured.short_price }}
+        </span>
+      </span>
+    </a>
+    {% endif %}
+  </div>
+
+  <a class="hero__scroll" href="#stats" aria-label="Scroll to content"><span></span></a>
+</section>
+
+<!-- ============ STATS ============ -->
+<section class="stats" id="stats" aria-label="Business highlights">
+  <div class="container stats__grid">
+    <div class="stat reveal" style="--i: 0">
+      <p class="stat__num" data-count="{{ stats.properties }}">{{ stats.properties }}</p>
+      <p class="stat__label">Available Properties</p>
+    </div>
+    <div class="stat reveal" style="--i: 1">
+      <p class="stat__num" data-count="{{ stats.types }}">{{ stats.types }}</p>
+      <p class="stat__label">Property Types</p>
+    </div>
+    <div class="stat reveal" style="--i: 2">
+      <p class="stat__num" data-count="{{ stats.cities }}">{{ stats.cities }}</p>
+      <p class="stat__label">{{ 'City' if stats.cities == 1 else 'Cities' }} Covered</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ABOUT ============ -->
+<section class="section" id="about" aria-labelledby="about-title">
+  <div class="container about">
+    <div class="about__copy reveal">
+      <p class="eyebrow eyebrow--dark">About us</p>
+      <h2 id="about-title" class="section__title">{{ business.business_name }}</h2>
+      {% if business.description %}
+        <p class="lead">{{ business.description }}</p>
+      {% else %}
+        <p class="lead">Browse our available properties, or ask our AI assistant to help you find the right fit.</p>
+      {% endif %}
+    </div>
+
+    <aside class="about__card reveal" style="--i: 1" aria-label="Business details">
+      <ul class="detail-list">
+        {% if business.business_type %}
+        <li>{{ icon('building') }}<div><small>Business type</small><span>{{ business.business_type }}</span></div></li>
+        {% endif %}
+        {% if business.owner_name %}
+        <li>{{ icon('user') }}<div><small>Owner</small><span>{{ business.owner_name }}</span></div></li>
+        {% endif %}
+        {% if business.phone %}
+        <li>{{ icon('phone') }}<div><small>Phone</small><a href="tel:{{ business.phone|replace(' ', '') }}">{{ business.phone }}</a></div></li>
+        {% endif %}
+        {% if business.email %}
+        <li>{{ icon('mail') }}<div><small>Email</small><a href="mailto:{{ business.email }}">{{ business.email }}</a></div></li>
+        {% endif %}
+        {% if business.address %}
+        <li>{{ icon('pin') }}<div><small>Address</small><span>{{ business.address }}</span></div></li>
+        {% endif %}
+      </ul>
+    </aside>
+  </div>
+</section>
+
+<!-- ============ PROPERTIES ============ -->
+<section class="section section--stone" id="properties" aria-labelledby="props-title">
+  <div class="container">
+    <div class="section__head reveal">
+      <p class="eyebrow eyebrow--dark">Featured properties</p>
+      <h2 id="props-title" class="section__title">Find your next home</h2>
+      <p class="section__sub">Currently available listings from {{ business.business_name }}.</p>
+    </div>
+
+    {% if properties %}
+    <form class="filters reveal" id="filters" role="search" aria-label="Filter properties" autocomplete="off" onsubmit="return false">
+      <label class="field">
+        <span>City</span>
+        <select name="city">
+          <option value="">All cities</option>
+          {% for c in cities %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+        </select>
+      </label>
+      {% if areas|length > 1 %}
+      <label class="field">
+        <span>Area</span>
+        <select name="area">
+          <option value="">All areas</option>
+          {% for a in areas %}<option value="{{ a }}">{{ a }}</option>{% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      <label class="field">
+        <span>Property type</span>
+        <select name="type">
+          <option value="">All types</option>
+          {% for t in types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+        </select>
+      </label>
+      {% if bed_options %}
+      <label class="field">
+        <span>Bedrooms</span>
+        <select name="beds">
+          <option value="">Any</option>
+          {% for b in bed_options %}<option value="{{ b }}">{{ b }}+</option>{% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      {% if budget_options|length > 1 %}
+      <label class="field">
+        <span>Budget</span>
+        <select name="budget">
+          <option value="">Any budget</option>
+          {% for o in budget_options %}
+          <option value="{{ o.key }}" data-min="{{ o.min }}" data-max="{{ o.max if o.max is not none else '' }}">{{ o.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      {% endif %}
+      <button class="btn btn--ghost btn--sm filters__reset" type="button" id="filtersReset">Reset</button>
+    </form>
+
+    <p class="results-count" id="resultsCount" aria-live="polite">
+      Showing <strong>{{ properties|length }}</strong> of {{ properties|length }} properties
+    </p>
+
+    <div class="pgrid" id="propertyGrid">
+      {% for p in properties %}
+        {% set idx = loop.index0 % 6 %}
+        {% include "business/_property_card.html" %}
+      {% endfor %}
+    </div>
+
+    <div class="empty" id="noResults" hidden>
+      {{ icon('search', 32) }}
+      <h3>No properties match those filters</h3>
+      <p>Try widening your search, or let our AI assistant help.</p>
+      <a class="btn btn--primary btn--sm" href="{{ chat_url }}">Ask the AI assistant</a>
+    </div>
+    {% else %}
+    <div class="empty reveal">
+      {{ icon('home', 32) }}
+      <h3>No properties are listed right now</h3>
+      <p>New listings are added regularly. Our AI assistant can note your requirements in the meantime.</p>
+      <a class="btn btn--primary btn--sm" href="{{ chat_url }}">Chat with AI</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- ============ AI ASSISTANT ============ -->
+<section class="section section--dark ai" id="ai" aria-labelledby="ai-title">
+  <span class="ai__ring ai__ring--a" aria-hidden="true"></span>
+  <span class="ai__ring ai__ring--b" aria-hidden="true"></span>
+  <div class="container ai__inner reveal">
+    <p class="eyebrow">AI assistant</p>
+    <h2 id="ai-title" class="section__title section__title--light">Not sure which property is right for you?</h2>
+    <p class="section__sub section__sub--light">Tell our AI assistant what you’re looking for, by text or by voice.</p>
+    <div class="ai__actions">
+      <a class="btn btn--accent btn--lg" href="{{ chat_url }}">{{ icon('chat', 20) }} Chat with AI</a>
+      <a class="btn btn--glass btn--lg" href="{{ call_url }}">{{ icon('mic', 20) }} Talk to AI</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHY CHOOSE US ============ -->
+<section class="section" id="why" aria-labelledby="why-title">
+  <div class="container">
+    <div class="section__head reveal">
+      <p class="eyebrow eyebrow--dark">The experience</p>
+      <h2 id="why-title" class="section__title">A smarter way to find a property</h2>
+    </div>
+    <div class="features">
+      <article class="feature reveal" style="--i: 0">
+        {{ icon('spark', 28) }}
+        <h3>AI-powered assistance</h3>
+        <p>Get answers about listings any time through chat or voice.</p>
+      </article>
+      <article class="feature reveal" style="--i: 1">
+        {{ icon('compass', 28) }}
+        <h3>Property discovery</h3>
+        <p>Filter by city, type, bedrooms and budget to narrow things down quickly.</p>
+      </article>
+      <article class="feature reveal" style="--i: 2">
+        {{ icon('chat', 28) }}
+        <h3>Personalized conversations</h3>
+        <p>Describe what you want in your own words and get relevant suggestions.</p>
+      </article>
+      <article class="feature reveal" style="--i: 3">
+        {{ icon('link', 28) }}
+        <h3>Direct business connection</h3>
+        <p>Your requirements reach {{ business.business_name }} so they can follow up.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section class="section section--stone" id="contact" aria-labelledby="contact-title">
+  <div class="container contact reveal">
+    <div class="contact__copy">
+      <p class="eyebrow eyebrow--dark">Contact</p>
+      <h2 id="contact-title" class="section__title">Looking for your next property?</h2>
+      <p class="section__sub">Reach {{ business.business_name }} directly, or start with our AI assistant.</p>
+      <div class="contact__actions">
+        {% if business.phone %}<a class="btn btn--primary" href="tel:{{ business.phone|replace(' ', '') }}">{{ icon('phone', 18) }} Call</a>{% endif %}
+        {% if business.email %}<a class="btn btn--primary" href="mailto:{{ business.email }}?subject={{ ('Property enquiry – ' ~ business.business_name)|urlencode }}">{{ icon('mail', 18) }} Email</a>{% endif %}
+        <a class="btn btn--ghost" href="{{ chat_url }}">{{ icon('chat', 18) }} Chat with AI</a>
+        <a class="btn btn--ghost" href="{{ call_url }}">{{ icon('mic', 18) }} Talk to AI</a>
+      </div>
+    </div>
+    {% if business.phone or business.email or business.address %}
+    <ul class="detail-list contact__card">
+      {% if business.phone %}<li>{{ icon('phone') }}<div><small>Phone</small><a href="tel:{{ business.phone|replace(' ', '') }}">{{ business.phone }}</a></div></li>{% endif %}
+      {% if business.email %}<li>{{ icon('mail') }}<div><small>Email</small><a href="mailto:{{ business.email }}">{{ business.email }}</a></div></li>{% endif %}
+      {% if business.address %}<li>{{ icon('pin') }}<div><small>Address</small><a href="https://www.google.com/maps/search/?api=1&query={{ business.address|urlencode }}" target="_blank" rel="noopener">{{ business.address }}</a></div></li>{% endif %}
+    </ul>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

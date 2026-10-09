@@ -1,0 +1,64 @@
+{% extends "layout/base.html" %}
+
+{% block title %}AI Chat{% endblock %}
+
+{% block page_title %}
+AI {{ business.business_type or 'Business' }} Assistant
+{% endblock %}
+
+{% block page_sub %}
+Welcome to {{ business.business_name }} <span class="wave">👋</span>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ai-chat.css') }}">
+{% endblock %}
+
+{% block content %}
+<input type="hidden"
+       id="businessId"
+       value="{{ business.id }}">
+
+<section class="glass-card chat-shell">
+
+  <div class="chat-status-bar">
+    <span class="online-chip"><span class="pulse-dot"></span> AI Online</span>
+  </div>
+
+  <div class="chat-window" id="chatWindow">
+    {% if messages|default([])|length == 0 %}
+    <div class="chat-empty" id="chatEmpty">
+      <div class="pulse-orb static"><i class="bi bi-robot"></i></div>
+      <h2>Welcome to AI Business Assistant</h2>
+      <p>I can help customers find properties based on location, budget, property type and requirements.</p>
+      <div class="suggestion-row">
+        <button class="suggestion-chip" data-text="Find an apartment"><i class="bi bi-house"></i> Find an apartment</button>
+        <button class="suggestion-chip" data-text="Commercial property"><i class="bi bi-building"></i> Commercial property</button>
+        <button class="suggestion-chip" data-text="2 BHK apartment"><i class="bi bi-houses"></i> 2 BHK apartment</button>
+      </div>
+    </div>
+    {% else %}
+      {% for m in messages %}
+        {% if m.sender == 'customer' %}
+        <div class="msg msg-customer"><div class="bubble">{{ m.text }}</div></div>
+        {% else %}
+        <div class="msg msg-ai">
+          <span class="tl-icon icon-purple"><i class="bi bi-robot"></i></span>
+          <div class="bubble">{{ m.text }}</div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <form class="chat-input-bar" id="chatForm">
+    <input type="text" id="chatInput" placeholder="Ask about properties..." autocomplete="off" required>
+    <button type="submit" class="send-btn" aria-label="Send"><i class="bi bi-send-fill"></i></button>
+  </form>
+
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

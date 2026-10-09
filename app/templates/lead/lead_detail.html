@@ -1,0 +1,423 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Lead Details{% endblock %}
+
+{% block page_title %}
+Lead Details
+{% endblock %}
+
+{% block page_sub %}
+View complete information about this lead.
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lead.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<section class="glass-card page-panel">
+
+    <!-- =========================
+         Page Header
+    ========================= -->
+    <div class="page-head">
+
+        <div>
+            <h2>Lead Details</h2>
+            <p>View complete information about this lead.</p>
+        </div>
+
+        <a href="{{ url_for('lead.lead_list') }}"
+           class="btn btn-outline-light">
+
+            <i class="bi bi-arrow-left"></i>
+            Back to Leads
+
+        </a>
+
+    </div>
+
+    <div class="row g-4">
+
+        <!-- =========================
+             Customer Information
+        ========================= -->
+
+        <div class="col-lg-6">
+
+            <div class="glass-card p-4 h-100">
+
+                <h4 class="section-title">
+                    <i class="bi bi-person-circle"></i>
+                    Customer Information
+                </h4>
+
+                <div class="detail-list">
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-person"></i>
+                            Name
+                        </span>
+
+                        <span class="value">
+                            {{ lead.customer.full_name }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-telephone"></i>
+                            Phone
+                        </span>
+
+                        <span class="value">
+                            {{ lead.customer.phone }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-envelope"></i>
+                            Email
+                        </span>
+
+                        <span class="value">
+                            {{ lead.customer.email }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+             Property Requirement
+        ========================= -->
+
+        <div class="col-lg-6">
+
+            <div class="glass-card p-4 h-100">
+
+                <h4 class="section-title">
+                    <i class="bi bi-house-door"></i>
+                    Property Requirement
+                </h4>
+
+                <div class="detail-list">
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-house"></i>
+                            Property Type
+                        </span>
+
+                        <span class="value">
+                            {{ lead.property_type }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-cash-stack"></i>
+                            Budget
+                        </span>
+
+                        <span class="value">
+                            ₹{{ "{:,.0f}".format(lead.budget or 0) }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-geo-alt"></i>
+                            Preferred City
+                        </span>
+
+                        <span class="value">
+                            {{ lead.preferred_city }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-door-open"></i>
+                            Bedrooms
+                        </span>
+
+                        <span class="value">
+                            {{ lead.bedrooms or "-" }}
+                        </span>
+                    </div>
+
+                    <div class="detail-item">
+                        <span class="label">
+                            <i class="bi bi-bullseye"></i>
+                            Purpose
+                        </span>
+
+                        <span class="value">
+                            {{ lead.purpose }}
+                        </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+             Lead Information
+        ========================= -->
+
+        <div class="col-12">
+
+            <div class="glass-card p-4">
+
+                <h4 class="section-title">
+                    <i class="bi bi-clipboard-data"></i>
+                    Lead Information
+                </h4>
+
+                <div class="detail-list">
+
+                    <div class="detail-item">
+
+                        <span class="label">
+                            <i class="bi bi-flag"></i>
+                            Priority
+                        </span>
+
+                        <span class="priority-badge priority-{{ lead.priority|lower }}">
+                            {{ lead.priority }}
+                        </span>
+
+                    </div>
+
+                    <div class="detail-item">
+
+                        <span class="label">
+                            <i class="bi bi-diagram-3"></i>
+                            Status
+                        </span>
+
+                        <span class="status-badge
+                        {% if lead.status == 'New Lead' %}new-lead
+                        {% elif lead.status == 'Qualified' %}qualified
+                        {% elif lead.status == 'Property Shared' %}property-shared
+                        {% elif lead.status == 'Site Visit Scheduled' %}site-visit
+                        {% elif lead.status == 'Negotiation' %}negotiation
+                        {% elif lead.status == 'Closed Won' %}closed
+                        {% else %}lost{% endif %}">
+
+                            {{ lead.status }}
+
+                        </span>
+
+                    </div>
+
+                    <div class="detail-item">
+
+                        <span class="label">
+                            <i class="bi bi-robot"></i>
+                            AI Score
+                        </span>
+
+                        <div class="ai-score">
+
+                            <strong>{{ lead.ai_score or 0 }}%</strong>
+
+                            <div class="ai-bar">
+
+                                <div class="ai-fill"
+                                     style="--score: {{ lead.ai_score or 0 }};">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="detail-item">
+
+                        <span class="label">
+                            <i class="bi bi-calendar-event"></i>
+                            Follow-up
+                        </span>
+
+                        <span class="value">
+
+                            {% if lead.follow_up_date %}
+                                {{ lead.follow_up_date.strftime('%d %b %Y') }}
+                            {% else %}
+                                No Follow-up Scheduled
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+                                        <!-- =========================
+                         Created At
+                    ========================= -->
+
+                    <div class="detail-item">
+
+                        <span class="label">
+                            <i class="bi bi-calendar-plus"></i>
+                            Created At
+                        </span>
+
+                        <span class="value">
+
+                            {% if lead.created_at %}
+                                {{ lead.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                            {% else %}
+                                -
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+
+
+                    <!-- =========================
+                         Last Updated
+                    ========================= -->
+
+                    <div class="detail-item">
+
+                        <span class="label">
+                            <i class="bi bi-clock-history"></i>
+                            Last Updated
+                        </span>
+
+                        <span class="value">
+
+                            {% if lead.updated_at %}
+                                {{ lead.updated_at.strftime('%d %b %Y, %I:%M %p') }}
+                            {% else %}
+                                -
+                            {% endif %}
+
+                        </span>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- =========================
+             Notes
+        ========================= -->
+
+        <div class="col-12">
+
+            <div class="glass-card p-4">
+
+                <h4 class="section-title">
+                    <i class="bi bi-journal-text"></i>
+                    Notes
+               </h4>
+
+                <div class="notes-box">
+
+                   <i class="bi bi-chat-left-text"></i>
+
+                  {{ lead.notes or "No notes available." }}
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+   
+
+
+    <!-- ======================================================
+     AI LEAD SUMMARY
+====================================================== -->
+
+<div class="detail-section">
+
+    <div class="section-title">
+        <i class="bi bi-robot"></i>
+        AI Lead Summary
+    </div>
+
+    <div class="ai-summary-box">
+        <p>
+            {{ lead.ai_summary or "No AI summary available." }}
+        </p>
+    </div>
+
+    <div style="margin-top: 15px;">
+
+        <form method="POST"
+              action="{{ url_for('lead.regenerate_summary', lead_id=lead.id) }}">
+
+            <button type="submit"
+                    class="btn btn-outline-light">
+
+                <i class="bi bi-arrow-clockwise"></i>
+                Regenerate AI Summary
+
+            </button>
+
+        </form>
+
+    </div>
+
+</div>
+
+    
+
+    <!-- =========================
+         Buttons
+    ========================= -->
+
+    <div class="action-buttons">
+
+        <a href="{{ url_for('lead.lead_list') }}"
+           class="btn btn-outline-light">
+
+            <i class="bi bi-arrow-left"></i>
+            Back
+
+        </a>
+
+        <a href="{{ url_for('lead.edit_lead', lead_id=lead.id) }}"
+           class="btn btn-warning">
+
+            <i class="bi bi-pencil-square"></i>
+            Edit Lead
+
+        </a>
+
+        <form method="POST"
+              action="{{ url_for('lead.delete_lead', lead_id=lead.id) }}"
+              style="display:inline;">
+
+            <button type="submit" class="btn btn-danger">
+
+                <i class="bi bi-trash"></i>
+                Delete
+
+            </button>
+
+        </form>
+
+    </div>
+
+</section>
+
+{% endblock %}

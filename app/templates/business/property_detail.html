@@ -1,0 +1,86 @@
+{% extends "business/_public_base.html" %}
+{% from "business/_icons.html" import icon %}
+{% block title %}{{ property.title }} | {{ business.business_name }}{% endblock %}
+{% block meta_description %}{{ (property.description or (property.property_type ~ ' in ' ~ (property.city or '') ~ ' by ' ~ business.business_name))|striptags|truncate(155, True, '…') }}{% endblock %}
+{% block body_class %}page-detail{% endblock %}
+
+{% block content %}
+{% set chat_url = url_for('ai.chat', business_id=business.id) %}
+{% set call_url = url_for('ai.call', business_id=business.id) %}
+{% set img = property_image_url(property) %}
+
+<div class="detail container">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a href="{{ home_url }}">Home</a><span aria-hidden="true">/</span>
+    <a href="{{ home_url }}#properties">Properties</a><span aria-hidden="true">/</span>
+    <span aria-current="page">{{ property.title }}</span>
+  </nav>
+
+  <div class="detail__grid">
+    <div class="detail__main">
+      <figure class="detail__media reveal">
+        <span class="placeholder">{{ icon('home', 64) }}<small>{{ property.property_type }}</small></span>
+        {% if img %}<img src="{{ img }}" alt="{{ property.title }}{% if property.city %} – {{ property.property_type }} in {{ property.city }}{% endif %}" data-fade>{% endif %}
+        <span class="pcard__badge">{{ property.property_type }}</span>
+      </figure>
+
+      <header class="detail__head reveal">
+        <h1 class="detail__title">{{ property.title }}</h1>
+        {% if property.city or property.area %}
+          <p class="pcard__loc">{{ icon('pin', 18) }}<span>{{ [property.area, property.city]|select|join(', ') }}</span></p>
+        {% endif %}
+        <p class="detail__price">{{ property.formatted_price }}</p>
+      </header>
+
+      <ul class="keyfacts reveal" aria-label="Key facts">
+        {% if property.bedrooms is not none %}<li>{{ icon('bed', 24) }}<strong>{{ property.bedrooms }}</strong><span>Bedrooms</span></li>{% endif %}
+        {% if property.bathrooms is not none %}<li>{{ icon('bath', 24) }}<strong>{{ property.bathrooms }}</strong><span>Bathrooms</span></li>{% endif %}
+        {% if property.sqft %}<li>{{ icon('area', 24) }}<strong>{{ "{:,}".format(property.sqft) }}</strong><span>Sq. ft.</span></li>{% endif %}
+        <li>{{ icon('building', 24) }}<strong>{{ property.property_type }}</strong><span>Type</span></li>
+      </ul>
+
+      {% if property.description %}
+      <section class="reveal" aria-labelledby="desc-title">
+        <h2 id="desc-title" class="detail__h2">About this property</h2>
+        <p class="lead lead--pre">{{ property.description }}</p>
+      </section>
+      {% endif %}
+
+      <section class="reveal" aria-labelledby="specs-title">
+        <h2 id="specs-title" class="detail__h2">Details</h2>
+        <dl class="specs">
+          <div><dt>Property ID</dt><dd>{{ property.property_id }}</dd></div>
+          <div><dt>Type</dt><dd>{{ property.property_type }}</dd></div>
+          {% if property.city %}<div><dt>City</dt><dd>{{ property.city }}</dd></div>{% endif %}
+          {% if property.area %}<div><dt>Area</dt><dd>{{ property.area }}</dd></div>{% endif %}
+          {% if property.address %}<div><dt>Address</dt><dd>{{ property.address }}</dd></div>{% endif %}
+        </dl>
+      </section>
+    </div>
+
+    <aside class="detail__side">
+      <div class="sidecard reveal" style="--i: 1">
+        <h2>Have questions about this property?</h2>
+        <p>Ask our AI assistant. Mention <strong>{{ property.property_id }}</strong> and it can help.</p>
+        <a class="btn btn--primary btn--block" href="{{ chat_url }}">{{ icon('chat', 18) }} Ask AI</a>
+        <a class="btn btn--ghost btn--block" href="{{ call_url }}">{{ icon('mic', 18) }} Talk to AI</a>
+        {% if business.phone or business.email %}
+        <hr>
+        <p class="sidecard__sub">Or contact {{ business.business_name }}</p>
+        {% if business.phone %}<a class="btn btn--ghost btn--block" href="tel:{{ business.phone|replace(' ', '') }}">{{ icon('phone', 18) }} {{ business.phone }}</a>{% endif %}
+        {% if business.email %}<a class="btn btn--ghost btn--block" href="mailto:{{ business.email }}?subject={{ ('Enquiry: ' ~ property.title ~ ' (' ~ property.property_id ~ ')')|urlencode }}">{{ icon('mail', 18) }} Email enquiry</a>{% endif %}
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+
+  {% if related %}
+  <section class="related" aria-labelledby="related-title">
+    <h2 id="related-title" class="detail__h2 reveal">More from {{ business.business_name }}</h2>
+    <div class="pgrid">
+      {% for p in related %}{% set idx = loop.index0 %}{% include "business/_property_card.html" %}{% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

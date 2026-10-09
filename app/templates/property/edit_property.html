@@ -1,0 +1,133 @@
+{% extends "layout/base.html" %}
+
+{% block title %}Edit Property{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Edit Property</h1>
+        <p>Update property information.</p>
+    </div>
+
+</div>
+
+<div class="glass-card">
+
+<form method="POST" enctype="multipart/form-data">
+
+<div class="form-grid">
+
+    <div class="form-group">
+        <label>Property Name</label>
+        <input type="text" name="title" value="{{ property.title }}">
+    </div>
+
+    <div class="form-group">
+        <label>Property Type</label>
+
+        <select name="property_type">
+           <option value="Apartment" {% if property.property_type == "Apartment" %}selected{% endif %}>Apartment</option>
+           <option value="Villa" {% if property.property_type == "Villa" %}selected{% endif %}>Villa</option>
+           <option value="House" {% if property.property_type == "House" %}selected{% endif %}>House</option>
+           <option value="Plot" {% if property.property_type == "Plot" %}selected{% endif %}>Plot</option>
+           <option value="Commercial" {% if property.property_type == "Commercial" %}selected{% endif %}>Commercial</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>City</label>
+        <input type="text" name="city" value="{{ property.city }}">
+    </div>
+
+    <div class="form-group">
+        <label>Area</label>
+        <input type="text" name="area" value="{{ property.area }}">
+    </div>
+
+    <div class="form-group">
+        <label>Price</label>
+        <input type="number" name="price" value="{{ property.price }}">
+    </div>
+
+    <div class="form-group">
+        <label>Sq.ft</label>
+        <input type="number" name="sqft" value="{{ property.sqft }}">
+    </div>
+
+    <div class="form-group">
+        <label>Bedrooms</label>
+        <input type="number" name="bedrooms" value="{{ property.bedrooms }}">
+    </div>
+
+    <div class="form-group">
+        <label>Bathrooms</label>
+        <input type="number" name="bathrooms" value="{{ property.bathrooms }}">
+    </div>
+
+</div>
+
+<div class="form-group">
+    <label>Address</label>
+
+    <textarea rows="3" name="address">{{ property.address }}</textarea>
+</div>
+
+<div class="form-group">
+
+    <label>Description</label>
+
+    <textarea rows="4" name="description">{{ property.description }}</textarea>
+
+</div>
+
+<div class="form-group">
+
+    <label>Status</label>
+
+    <select name="status">
+        <option value="Available" {% if property.status == "Available" %}selected{% endif %}>
+           Available
+        </option>
+
+        <option value="Booked" {% if property.status == "Booked" %}selected{% endif %}>
+           Booked
+        </option>
+
+        <option value="Sold" {% if property.status == "Sold" %}selected{% endif %}>
+           Sold
+        </option>
+    </select>
+
+</div>
+
+<div class="form-group">
+
+    <label>Property Image</label>
+
+    <input
+        type="file"
+        name="image">
+
+</div>
+
+<div class="form-actions">
+
+    <a href="{{ url_for('property.property_list') }}"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-save"></i>
+        Update Property
+    </button>
+
+</div>
+
+</form>
+
+</div>
+
+{% endblock %}

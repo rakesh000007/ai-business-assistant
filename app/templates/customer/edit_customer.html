@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Customer</title>
+
+    <style>
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, Helvetica, sans-serif;
+        }
+
+        body{
+            background:#111827;
+            color:white;
+        }
+
+        .container{
+            width:700px;
+            margin:50px auto;
+            background:#1f2937;
+            padding:35px;
+            border-radius:15px;
+            box-shadow:0 0 20px rgba(0,0,0,.4);
+        }
+
+        h2{
+            margin-bottom:25px;
+        }
+
+        label{
+            display:block;
+            margin-top:18px;
+            margin-bottom:8px;
+            font-weight:bold;
+        }
+
+        input,
+        select{
+            width:100%;
+            padding:12px;
+            border:none;
+            border-radius:8px;
+            background:#374151;
+            color:white;
+            font-size:15px;
+        }
+
+        input:focus,
+        select:focus{
+            outline:none;
+            border:2px solid #7c5cff;
+        }
+
+        .buttons{
+            margin-top:30px;
+            display:flex;
+            gap:15px;
+        }
+
+        button{
+            background:#7c5cff;
+            color:white;
+            border:none;
+            padding:12px 24px;
+            border-radius:8px;
+            cursor:pointer;
+            font-size:15px;
+        }
+
+        button:hover{
+            background:#6b4ef5;
+        }
+
+        .cancel{
+            background:#4b5563;
+            color:white;
+            text-decoration:none;
+            padding:12px 24px;
+            border-radius:8px;
+        }
+
+        .cancel:hover{
+            background:#374151;
+        }
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Edit Customer</h2>
+
+<form method="POST">
+
+<label>Full Name</label>
+<input
+    type="text"
+    name="full_name"
+    value="{{ customer.full_name }}"
+    required
+>
+
+<label>Phone</label>
+<input
+    type="tel"
+    name="phone"
+    value="{{ customer.phone }}"
+    maxlength="10"
+    pattern="[0-9]{10}"
+    required
+>
+
+<label>Email</label>
+<input
+    type="email"
+    name="email"
+    value="{{ customer.email }}"
+>
+
+<label>City</label>
+<input
+    type="text"
+    name="city"
+    value="{{ customer.city }}"
+>
+
+<label>Source</label>
+
+<select name="source">
+
+    <option value="Website" {% if customer.source=="Website" %}selected{% endif %}>🌐 Website</option>
+
+    <option value="Phone Call" {% if customer.source=="Phone Call" %}selected{% endif %}>📞 Phone Call</option>
+
+    <option value="WhatsApp" {% if customer.source=="WhatsApp" %}selected{% endif %}>💬 WhatsApp</option>
+
+    <option value="Walk-in" {% if customer.source=="Walk-in" %}selected{% endif %}>🚶 Walk-in</option>
+
+    <option value="Facebook" {% if customer.source=="Facebook" %}selected{% endif %}>📘 Facebook</option>
+
+    <option value="Instagram" {% if customer.source=="Instagram" %}selected{% endif %}>📷 Instagram</option>
+
+    <option value="Referral" {% if customer.source=="Referral" %}selected{% endif %}>🤝 Referral</option>
+
+</select>
+
+<label>Status</label>
+
+<select name="status">
+
+    <option value="New Lead" {% if customer.status=="New Lead" %}selected{% endif %}>
+        🟢 New Lead
+    </option>
+
+    <option value="Contacted" {% if customer.status=="Contacted" %}selected{% endif %}>
+        📞 Contacted
+    </option>
+
+    <option value="Site Visit Scheduled" {% if customer.status=="Site Visit Scheduled" %}selected{% endif %}>
+        🏠 Site Visit Scheduled
+    </option>
+
+    <option value="Negotiation" {% if customer.status=="Negotiation" %}selected{% endif %}>
+        🤝 Negotiation
+    </option>
+
+    <option value="Closed" {% if customer.status=="Closed" %}selected{% endif %}>
+        ✅ Closed
+    </option>
+
+    <option value="Lost" {% if customer.status=="Lost" %}selected{% endif %}>
+        ❌ Lost
+    </option>
+
+</select>
+
+<div class="buttons">
+
+    <button type="submit">Update Customer</button>
+
+    <a href="{{ url_for('customer.customer_list') }}" class="cancel">
+        Cancel
+    </a>
+
+</div>
+
+</form>
+
+</div>
+
+</body>
+</html>
