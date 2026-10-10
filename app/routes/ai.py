@@ -64,6 +64,13 @@ GEMINI_LIVE_MODEL = (
     "gemini-3.8-live"
 )
 # ==========================================================
+# GEMINI CHAT MODEL
+# ==========================================================
+
+GEMINI_CHAT_MODEL = (
+    "gemini-3.5-flash-lite"
+)
+# ==========================================================
 # AI BLUEPRINT
 # ==========================================================
 
@@ -209,6 +216,1998 @@ def gemini_live_token():
             "message": (
                 "Could not create Gemini Live token."
             )
+        }), 500
+
+# ==========================================================
+# GEMINI CHAT
+# ==========================================================
+
+@ai_bp.route(
+    "/api/gemini-chat",
+    methods=["POST"]
+)
+def gemini_chat():
+
+    try:
+
+        data = request.get_json() or {}
+
+        message = data.get(
+            "message",
+            ""
+        ).strip()
+
+        conversation_history = data.get(
+            "conversation_history",
+            []
+        )
+
+        business_id = data.get(
+            "business_id"
+        )
+
+        if not message:
+
+            return jsonify({
+                "success": False,
+                "message": "Message is required."
+            }), 400
+
+        if not business_id:
+
+            return jsonify({
+                "success": False,
+                "message": "Business information is missing."
+            }), 400
+
+        business = BusinessInformation.query.get(
+            int(business_id)
+        )
+
+        if not business:
+
+            return jsonify({
+                "success": False,
+                "message": "Business not found."
+            }), 404
+
+        conversation = ""
+
+        for item in conversation_history:
+
+            if not isinstance(
+                item,
+                dict
+            ):
+                continue
+
+            role = item.get(
+                "role",
+                "user"
+            )
+
+            content = item.get(
+                "content",
+                ""
+            )
+
+            if content:
+
+                conversation += (
+                    f"{role}: {content}\n"
+                )
+
+        conversation += (
+            f"user: {message}"
+        )
+
+        # ==================================================
+        # BUSINESS INFORMATION FUNCTION
+        # ==================================================
+
+        get_business_information = {
+
+            "name":
+                "get_business_information",
+
+            "description":
+                "Get the verified business profile "
+                "information from the database when "
+                "the customer asks about the business, "
+                "company, owner, services, business "
+                "background, or wants to know more "
+                "about the business.",
+
+            "parameters": {
+
+                "type":
+                    "object",
+
+                "properties": {}
+
+            }
+
+        }
+
+        business_tool = types.Tool(
+            function_declarations=[
+                get_business_information
+            ]
+        )
+
+        # ==================================================
+        # PROPERTY SEARCH FUNCTION
+        # ==================================================
+
+        search_properties = {
+
+            "name":
+                "search_properties",
+
+
+            "description":
+                "Search the real estate property database. "
+                "Use new_search when the customer gives "
+                "new or changed property requirements. "
+                "Use next_property when the customer rejects "
+                "the currently shown property or asks to see "
+                "another property. When using next_property, "
+                "you MUST reuse all previously specified "
+                "filters, including city, property_type, "
+                "bedrooms, and budget. Do not omit any "
+                "previously specified filter unless the "
+                "customer explicitly changes that requirement.",
+
+
+            "parameters": {
+
+                "type":
+                    "object",
+
+                "properties": {
+
+                    "city": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "City to search."
+
+                    },
+
+                    "property_type": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Property type such as Apartment, "
+                            "Villa, House, Plot, or Commercial."
+
+                    },
+
+                    "bedrooms": {
+
+                        "type":
+                            "integer",
+
+                        "description":
+                            "Number of bedrooms."
+
+                    },
+
+                    "budget": {
+
+                        "type":
+                            "number",
+
+                        "description":
+                            "Maximum budget in Indian rupees."
+
+                    },
+
+                    "search_mode": {
+
+                        "type":
+                            "string",
+
+                        "enum": [
+                            "new_search",
+                            "next_property"
+                        ],
+
+                        "description":
+                            "Use new_search for new or changed "
+                            "requirements. Use next_property "
+                            "when the customer rejects the "
+                            "currently shown property or asks "
+                            "for another property."
+
+                    }
+
+                },
+
+                "required": [
+                    "search_mode"
+                ]
+
+            }
+
+        }
+
+        property_tool = types.Tool(
+            function_declarations=[
+                search_properties
+            ]
+        )
+
+        
+        save_customer = {
+
+            "name":
+                "save_customer",
+
+            "description":
+                "Save or update the customer in the "
+                "business customer database when the "
+                "customer has provided their full name "
+                "and phone number.",
+
+            "parameters": {
+
+                "type":
+                    "object",
+
+                "properties": {
+
+                    "full_name": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's full name."
+
+                    },
+
+                    "phone": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's phone number."
+
+                    },
+
+                    "email": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's email address, "
+                            "if provided."
+
+                    },
+
+                    "city": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's city, if provided."
+
+                    }
+
+                },
+
+                "required": [
+                    "full_name",
+                    "phone"
+                ]
+
+            }
+
+        }
+
+        customer_tool = types.Tool(
+            function_declarations=[
+                save_customer
+            ]
+        )
+
+        save_customer_requirement = {
+
+            "name":
+                "save_customer_requirement",
+
+            "description":
+                "Save the customer's property requirements "
+                "in the business customer database when "
+                "the customer has provided their property "
+                "requirements.",
+
+            "parameters": {
+
+                "type":
+                    "object",
+
+                "properties": {
+
+                    "full_name": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's full name."
+
+                    },
+
+                    "phone": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's phone number."
+
+                    },
+
+                    "property_type": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Required property type such as "
+                            "Apartment, Villa, House, Plot, "
+                            "or Commercial."
+
+                    },
+
+                    "city": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's preferred city or "
+                            "location."
+
+                    },
+
+                    "bedrooms": {
+
+                        "type":
+                            "integer",
+
+                        "description":
+                            "Required number of bedrooms."
+
+                    },
+
+                    "budget": {
+
+                        "type":
+                            "number",
+
+                        "description":
+                            "Maximum budget in Indian rupees."
+
+                    },
+
+                    "notes": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Any additional property "
+                            "requirements or preferences."
+
+                    }
+
+                },
+
+                "required": [
+                    "full_name",
+                    "phone",
+                    "property_type"
+                ]
+
+            }
+
+        }
+
+        requirement_tool = types.Tool(
+            function_declarations=[
+                save_customer_requirement
+            ]
+        )
+        save_lead = {
+
+            "name":
+                "save_lead",
+
+            "description":
+                "Create a CRM lead for the customer "
+                "after sufficient customer and property "
+                "requirement information has been collected.",
+
+            "parameters": {
+
+                "type":
+                    "object",
+
+                "properties": {
+
+                    "full_name": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's full name."
+
+                    },
+
+                    "phone": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's phone number."
+
+                    },
+
+                    "email": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's email address, "
+                            "if available."
+
+                    },
+
+                    "property_type": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Required property type."
+
+                    },
+
+                    "city": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Customer's preferred city."
+
+                    },
+
+                    "budget": {
+
+                        "type":
+                            "number",
+
+                        "description":
+                            "Customer's maximum budget "
+                            "in Indian rupees."
+
+                    },
+
+                    "bedrooms": {
+
+                        "type":
+                            "integer",
+
+                        "description":
+                            "Required number of bedrooms."
+
+                    },
+
+                    "purpose": {
+
+                        "type":
+                            "string",
+
+                        "enum": [
+                            "Buy",
+                            "Rent",
+                            "Lease"
+                        ],
+
+                        "description":
+                            "Customer's purpose for the "
+                            "property, if provided."
+
+                    },
+
+                    "customer_interested": {
+
+                        "type":
+                            "boolean",
+
+                        "description":
+                            "Whether the customer has "
+                            "explicitly expressed interest "
+                            "in the property."
+
+                    },
+
+                    "property_title": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Title of the property discussed "
+                            "with the customer, if available."
+
+                    },
+
+                    "notes": {
+
+                        "type":
+                            "string",
+
+                        "description":
+                            "Additional lead information "
+                            "or customer requirements."
+
+                    }
+
+                },
+
+                "required": [
+                    "full_name",
+                    "phone",
+                    "property_type"
+                ]
+
+            }
+
+        }
+
+        lead_tool = types.Tool(
+            function_declarations=[
+                save_lead
+            ]
+        )
+
+        start_time = time.time()
+        response = gemini_client.models.generate_content(
+
+            model=GEMINI_CHAT_MODEL,
+
+            contents=conversation,
+
+            config=types.GenerateContentConfig(
+
+                system_instruction=(
+
+                    "You are an AI chat assistant "
+                    "for the business. "
+
+                    "When the customer asks about "
+                    "the business, company, owner, "
+                    "services, business background, "
+                    "or asks to know more about the "
+                    "business, you MUST call the "
+                    "get_business_information function. "
+
+                    "After the function returns, "
+                    "answer the customer naturally "
+                    "using only the verified business "
+                    "information returned by the function. "
+
+                    "If any business information field "
+                    "is empty or missing, do not invent "
+                    "or assume the information. "
+
+                    "Remember all customer information "
+                    "provided earlier in the conversation, "
+                    "including the customer's full name "
+                    "and phone number. "
+
+                    "When the customer provides property "
+                    "requirements such as property type, "
+                    "preferred city, bedrooms, or budget, "
+                    "save the customer's latest requirement "
+                    "using the save_customer_requirement "
+                    "function when the required customer "
+                    "details are available. "
+
+                    "When the customer provides a complete "
+                    "property requirement and the property "
+                    "type is available, call the "
+                    "save_customer_requirement function "
+                    "before calling search_properties. "
+
+                    "If the customer has not yet provided "
+                    "their full name or phone number, do "
+                    "not block property search only because "
+                    "of the missing name or phone number. "
+
+                    "Use the available requirement "
+                    "information to search for properties "
+                    "when the customer asks to find, "
+                    "search, recommend, or show properties. "
+
+                    "Whenever the customer asks to "
+                    "find, search, recommend, or show "
+                    "properties, you MUST call the "
+                    "search_properties function. "
+
+
+                    "Use search_mode new_search when "
+                    "the customer provides new or changed "
+                    "property requirements. "
+
+                    "When the customer rejects the current "
+                    "property or asks to see another property "
+                    "without changing requirements, use "
+                    "search_mode next_property. You MUST "
+                    "include all previously specified search "
+                    "filters in the function call, including "
+                    "city, property_type, bedrooms, and budget. "
+                    "Do not omit a previously specified filter "
+                    "unless the customer explicitly changes "
+                    "that requirement. "
+
+
+                    "Do not provide general property "
+                    "suggestions instead of calling the "
+                    "search_properties function. "
+
+                    "Do not invent property listings, "
+                    "prices, locations, availability, "
+                    "or amenities. "
+
+                    "Only provide actual property "
+                    "information returned by the "
+                    "search_properties function. "
+
+                    "Always use the exact property title "
+                    "returned by the search_properties "
+                    "function. Do not rename, shorten, "
+                    "or modify the property title. "
+
+                    "When the customer asks for more "
+                    "details about a property, provide "
+                    "the available verified details "
+                    "returned by the search_properties "
+                    "function, including the property "
+                    "title, property type, city, address, "
+                    "bedrooms, bathrooms, sqft, price, "
+                    "status, and description when "
+                    "available. "
+
+                    "Do not invent or assume any missing "
+                    "property details. "
+
+                    "After a search returns at least one "
+                    "matching property, present only "
+                    "ONE property at a time. "
+
+                    "After presenting the property, "
+                    "ALWAYS explicitly ask: "
+                    "'Are you interested in this property?' "
+
+                    "Do not assume that the customer is "
+                    "interested or not interested until "
+                    "the customer clearly expresses "
+                    "their intent. "
+
+                    "If the customer clearly expresses "
+                    "positive interest in the currently "
+                    "shown property, continue with the "
+                    "lead creation process. "
+
+                    "Positive interest includes statements "
+                    "such as 'I am interested', "
+                    "'Yes, I am interested', "
+                    "'I like this property', "
+                    "'This property looks good', "
+                    "or 'I want this property'. "
+
+                    "Do not treat neutral responses such "
+                    "as 'interesting', 'okay', 'fine', "
+                    "'hmm', or similar responses by "
+                    "themselves as positive interest. "
+
+                    "If the customer rejects the current "
+                    "property, says they are not interested, "
+                    "or asks to see another property, "
+                    "do not create a lead for that property. "
+
+                    "Use search_properties with "
+                    "search_mode next_property to find "
+                    "another matching property when "
+                    "the customer requests another property. "
+
+                    "Do not ask for the customer's name "
+                    "or phone number before the customer "
+                    "has expressed positive interest in "
+                    "the currently shown property, unless "
+                    "the customer voluntarily provides "
+                    "them earlier. "
+
+                    "After the customer expresses positive "
+                    "interest, check whether the customer's "
+                    "full name and phone number are already "
+                    "available from the conversation. "
+
+                    "If the full name and phone number "
+                    "were already provided earlier, "
+                    "remember and reuse them. "
+
+                    "If the full name is missing, ask the "
+                    "customer for their full name. "
+
+                    "If the phone number is missing, ask "
+                    "the customer for their phone number. "
+
+                    "Do not call save_customer until both "
+                    "the full name and phone number are "
+                    "available. "
+
+                    "Once the full name and phone number "
+                    "are available after positive interest, "
+                    "call the save_customer function. "
+
+                    "After save_customer succeeds, ask the "
+                    "customer for their preferred follow-up "
+                    "date. "
+
+                    "The customer may provide a follow-up "
+                    "date or explicitly say that they do "
+                    "not want a follow-up date. "
+
+                    "If the customer provides a follow-up "
+                    "date, use that date for the lead. "
+
+                    "If the customer explicitly says they "
+                    "do not want a follow-up date, treat "
+                    "the follow-up date as empty. "
+
+                    "Do not create a lead before the "
+                    "customer has either provided a "
+                    "follow-up date or explicitly said "
+                    "that they do not want a follow-up "
+                    "date. "
+
+                    "Only after positive interest, "
+                    "full name, phone number, saved "
+                    "customer information, and a provided "
+                    "follow-up date or explicit no-date "
+                    "response are available, call the "
+                    "save_lead function. "
+
+                    "When calling save_lead, use the "
+                    "currently discussed property and "
+                    "the customer's latest verified "
+                    "requirements and details. "
+
+                    "Do not create a lead merely because "
+                    "the customer provided property "
+                    "requirements. "
+
+                    "Do not create a lead when the "
+                    "customer rejects a property or asks "
+                    "for another property. "
+
+                    "If the customer changes any "
+                    "requirement such as city, property "
+                    "type, bedrooms, or budget, treat "
+                    "it as an update to the previous "
+                    "property requirement. "
+
+                    "Save the updated requirement and "
+                    "call search_properties with "
+                    "search_mode new_search. "
+
+                    "After a new search, present only "
+                    "one matching property and ask "
+                    "'Are you interested in this property?' "
+
+                    "After save_lead succeeds, confirm "
+                    "naturally that the customer's details "
+                    "and property interest have been "
+                    "recorded. "
+
+                ),
+
+                tools=[
+                    business_tool,
+                    property_tool,
+                    customer_tool,
+                    requirement_tool,
+                    lead_tool
+                ],
+
+                automatic_function_calling=(
+                    types.AutomaticFunctionCallingConfig(
+                        disable=True
+                    )
+                )
+
+            )
+
+        )
+        print(
+           "GEMINI FIRST CALL TIME:",
+            round(time.time() - start_time, 2),
+            "seconds"
+        )
+
+        # ==================================================
+        # CHECK FOR FUNCTION CALL
+        # ==================================================
+        rejected_property_ids = (
+          data.get(
+            "rejected_property_ids",
+               []
+          )
+        )
+
+        current_property_ids = (
+           data.get(
+             "current_property_ids",
+             []
+           )
+         )
+
+        chat_properties = []
+
+        chat_properties = []
+        function_calls = (
+            response.function_calls
+            or []
+        )
+
+        if function_calls:
+
+            function_responses = []
+
+            for function_call in function_calls:
+
+                if (
+                    function_call.name ==
+                    "get_business_information"
+                ):
+
+
+                    print(
+                        "GEMINI CHAT BUSINESS "
+                        "INFORMATION FUNCTION CALL"
+                    )
+
+                    business_data = {
+
+                        "success": True,
+
+                        "business": {
+
+                            "business_name":
+                                business.business_name,
+
+                            "owner_name":
+                                business.owner_name,
+
+                            "email":
+                                business.email,
+
+                            "phone":
+                                business.phone,
+
+                            "address":
+                                business.address,
+
+                            "business_type":
+                                business.business_type,
+
+                            "description":
+                                business.description
+
+                        }
+
+                    }
+
+                    function_responses.append(
+
+                        types.Part.from_function_response(
+
+                            name=
+                               function_call.name,
+
+                            response=
+                               business_data
+
+                         )
+
+                    )
+                elif (
+                    function_call.name ==
+                    "search_properties"
+                ):
+
+                    print(
+                        "GEMINI CHAT PROPERTY "
+                        "SEARCH FUNCTION CALL"
+                    )
+
+                    search_args = (
+                        function_call.args
+                        or {}
+                    )
+                    print("GEMINI PROPERTY SEARCH ARGS:", search_args)
+                    
+                   
+
+                    search_mode = (
+                        search_args.get(
+                            "search_mode",
+                            "new_search"
+                        )
+                    )
+
+                    city = (
+                        search_args.get(
+                            "city"
+                        )
+                    )
+
+                    property_type = (
+                        search_args.get(
+                            "property_type"
+                        )
+                    )
+
+                    bedrooms = (
+                        search_args.get(
+                            "bedrooms"
+                        )
+                    )
+
+                    budget = (
+                        search_args.get(
+                            "budget"
+                        )
+                    )
+
+
+                    if search_mode == "next_property":
+
+                        rejected_property_ids = list(
+                            set(
+                                str(pid)
+                                for pid in (
+                                    rejected_property_ids +
+                                    current_property_ids
+                                )
+                                if pid is not None
+                            )
+                        )
+
+                    print(
+                        "CHAT CURRENT PROPERTY IDS:",
+                        current_property_ids
+                    )
+
+                    print(
+                        "CHAT EXCLUDED PROPERTY IDS:",
+                        rejected_property_ids
+                    )
+
+            
+                    # ==================================
+                    # SEARCH PROPERTIES
+                    # ==================================
+
+                    properties = (
+                        get_matching_properties(
+
+                            user_id=
+                                business.user_id,
+
+                            property_type=
+                                property_type,
+
+                            city=
+                                city,
+
+                            budget=
+                                budget,
+
+                            bedrooms=
+                                bedrooms,
+
+                            excluded_property_ids=
+                                rejected_property_ids
+
+                        )
+                    )
+                    print(
+                        "GEMINI PROPERTY SEARCH RESULTS:",
+                        [
+                            (
+                                property.id,
+                                property.title,
+                                property.city,
+                                property.price,
+                                property.user_id,
+                                property.status
+                            )
+                            for property in properties
+                        ]
+                    )
+
+                    results = []
+
+                    for property in properties:
+
+                        results.append({
+
+                            "id":
+                                property.id,
+
+                            "property_id":
+                                property.property_id,
+
+                            "property_code":
+                                property.property_id,
+
+                            "title":
+                                property.title,
+
+                            "property_type":
+                                property.property_type,
+
+                            "city":
+                                property.city,
+
+                            "address":
+                                property.address,
+
+                            "bedrooms":
+                                property.bedrooms,
+
+                            "bathrooms":
+                                property.bathrooms,
+
+                            "sqft":
+                                property.sqft,
+
+                            "price":
+                                property.price,
+
+                            "status":
+                                property.status,
+
+                            "description":
+                                property.description
+
+                        })
+                    # ==================================
+                    # SHOW ONLY ONE PROPERTY
+                    # ==================================
+
+                    if results:
+
+                        results = [
+                            results[0]
+                        ]
+                    chat_properties = results
+
+                    property_data = {
+
+                        "success":
+                            True,
+
+                        "search_mode":
+                            search_mode,
+
+                        "properties":
+                            results
+
+                    }
+
+                    function_responses.append(
+
+                        types.Part.from_function_response(
+
+                            name=
+                                function_call.name,
+
+                            response=
+                                property_data
+
+                        )
+
+                    )
+                elif (
+                    function_call.name ==
+                    "save_customer"
+                ):
+
+                    print(
+                        "GEMINI CHAT SAVE CUSTOMER "
+                        "FUNCTION CALL"
+                    )
+
+                    customer_args = (
+                        function_call.args
+                        or {}
+                    )
+
+                    full_name = (
+                        customer_args.get(
+                            "full_name"
+                        )
+                    )
+
+                    phone = (
+                        customer_args.get(
+                            "phone"
+                        )
+                    )
+
+                    email = (
+                        customer_args.get(
+                            "email"
+                        )
+                    )
+
+                    city = (
+                        customer_args.get(
+                            "city"
+                        )
+                    )
+
+                    if not full_name or not phone:
+
+                        customer_data = {
+
+                            "success":
+                                False,
+
+                            "message":
+                                "Customer full name "
+                                "and phone number are "
+                                "required."
+
+                        }
+
+                    else:
+
+                        customer = Customer.query.filter_by(
+                            user_id=
+                                business.user_id,
+                            phone=
+                                phone.strip()
+                        ).first()
+
+                        if customer:
+
+                            customer.full_name = (
+                                full_name.strip()
+                            )
+
+                            if email:
+                                customer.email = (
+                                    email.strip()
+                                )
+
+                            if city:
+                                customer.city = (
+                                    city.strip()
+                                )
+
+                            customer.status = "New Lead"
+
+                            action = "updated"
+
+                        else:
+
+                            customer = Customer(
+
+                                user_id=
+                                    business.user_id,
+
+                                full_name=
+                                    full_name.strip(),
+
+                                phone=
+                                    phone.strip(),
+
+                                email=
+                                    email.strip()
+                                    if email
+                                    else None,
+
+                                city=
+                                    city.strip()
+                                    if city
+                                    else None,
+
+                                source=
+                                    "Website",
+
+                                status=
+                                    "New Lead"
+
+                            )
+
+                            db.session.add(
+                                customer
+                            )
+
+                            action = "created"
+
+                        db.session.commit()
+
+                        print(
+                            "GEMINI CHAT CUSTOMER:",
+                            action,
+                            customer.id,
+                            customer.full_name,
+                            customer.phone
+                        )
+
+                        customer_data = {
+
+                            "success":
+                                True,
+
+                            "action":
+                                action,
+
+                            "customer": {
+
+                                "id":
+                                    customer.id,
+
+                                "full_name":
+                                    customer.full_name,
+
+                                "phone":
+                                    customer.phone,
+
+                                "email":
+                                    customer.email,
+
+                                "city":
+                                    customer.city
+
+                            }
+
+                        }
+
+                    function_responses.append(
+
+                        types.Part.from_function_response(
+
+                            name=
+                                function_call.name,
+
+                            response=
+                                customer_data
+
+                        )
+
+                    )
+                    
+                elif (
+                    function_call.name ==
+                    "save_customer_requirement"
+                ):
+
+                    print(
+                        "GEMINI CHAT SAVE CUSTOMER "
+                        "REQUIREMENT FUNCTION CALL"
+                    )
+
+                    requirement_args = (
+                        function_call.args
+                        or {}
+                    )
+
+                    full_name = (
+                        requirement_args.get(
+                            "full_name"
+                        )
+                    )
+
+                    phone = (
+                        requirement_args.get(
+                            "phone"
+                        )
+                    )
+
+                    property_type = (
+                        requirement_args.get(
+                            "property_type"
+                        )
+                    )
+
+                    city = (
+                        requirement_args.get(
+                            "city"
+                        )
+                    )
+
+                    bedrooms = (
+                        requirement_args.get(
+                            "bedrooms"
+                        )
+                    )
+
+                    budget = (
+                        requirement_args.get(
+                            "budget"
+                        )
+                    )
+
+                    notes = (
+                        requirement_args.get(
+                            "notes"
+                        )
+                    )
+
+                    if (
+                        not full_name
+                        or not phone
+                        or not property_type
+                    ):
+
+                        requirement_data = {
+
+                            "success":
+                                False,
+
+                            "message":
+                                "Customer full name, "
+                                "phone number, and "
+                                "property type are "
+                                "required."
+
+                        }
+
+                    else:
+
+                        customer = (
+                            Customer.query.filter_by(
+                                user_id=
+                                    business.user_id,
+                                phone=
+                                    phone.strip()
+                            ).first()
+                        )
+
+                        if not customer:
+
+                            requirement_data = {
+
+                                "success":
+                                    False,
+
+                                "message":
+                                    "Customer was not "
+                                    "found. Save the "
+                                    "customer first."
+
+                            }
+
+                        else:
+
+                            requirement = (
+                                CustomerRequirement(
+
+                                    customer_id=
+                                        customer.id,
+
+                                    property_type=
+                                        property_type,
+
+                                    preferred_location=
+                                        city.strip()
+                                        if city
+                                        else None,
+
+                                    min_budget=
+                                        None,
+
+                                    max_budget=
+                                        budget
+                                        if budget
+                                        is not None
+                                        else None,
+
+                                    bedrooms=
+                                        bedrooms
+                                        if bedrooms
+                                        is not None
+                                        else None,
+
+                                    status=
+                                        "New",
+
+                                    notes=
+                                        notes.strip()
+                                        if notes
+                                        else None
+
+                                )
+                            )
+
+                            db.session.add(
+                                requirement
+                            )
+
+                            db.session.commit()
+
+                            print(
+                                "GEMINI CHAT CUSTOMER "
+                                "REQUIREMENT:",
+                                requirement.id,
+                                customer.full_name,
+                                requirement.property_type,
+                                requirement.preferred_location,
+                                requirement.max_budget,
+                                requirement.bedrooms
+                            )
+
+                            requirement_data = {
+
+                                "success":
+                                    True,
+
+                                "requirement": {
+
+                                    "id":
+                                        requirement.id,
+
+                                    "customer_id":
+                                        requirement.customer_id,
+
+                                    "property_type":
+                                        requirement.property_type,
+
+                                    "preferred_location":
+                                        requirement.preferred_location,
+
+                                    "max_budget":
+                                        requirement.max_budget,
+
+                                    "bedrooms":
+                                        requirement.bedrooms,
+
+                                    "status":
+                                        requirement.status,
+
+                                    "notes":
+                                        requirement.notes
+
+                                }
+
+                            }
+
+                    function_responses.append(
+
+                        types.Part.from_function_response(
+
+                            name=
+                                function_call.name,
+
+                            response=
+                                requirement_data
+
+                        )
+
+                    )
+                elif (
+                    function_call.name ==
+                    "save_lead"
+                ):
+
+                    print(
+                        "GEMINI CHAT SAVE LEAD "
+                        "FUNCTION CALL"
+                    )
+
+                    lead_args = (
+                        function_call.args
+                        or {}
+                    )
+
+                    full_name = (
+                        lead_args.get(
+                            "full_name"
+                        )
+                    )
+
+                    phone = (
+                        lead_args.get(
+                            "phone"
+                        )
+                    )
+
+                    email = (
+                        lead_args.get(
+                            "email"
+                        )
+                    )
+
+                    property_type = (
+                        lead_args.get(
+                            "property_type"
+                        )
+                    )
+
+                    city = (
+                        lead_args.get(
+                            "city"
+                        )
+                    )
+
+                    budget = (
+                        lead_args.get(
+                            "budget"
+                        )
+                    )
+
+                    bedrooms = (
+                        lead_args.get(
+                            "bedrooms"
+                        )
+                    )
+
+                    purpose = (
+                        lead_args.get(
+                            "purpose",
+                            "Buy"
+                        )
+                    )
+
+                    customer_interested = (
+                        lead_args.get(
+                            "customer_interested",
+                            False
+                        )
+                    )
+
+                    property_title = (
+                        lead_args.get(
+                            "property_title"
+                        )
+                    )
+
+                    notes = (
+                        lead_args.get(
+                            "notes"
+                        )
+                    )
+
+                    if (
+                        not full_name
+                        or not phone
+                        or not property_type
+                    ):
+
+                        lead_data_response = {
+
+                            "success":
+                                False,
+
+                            "message":
+                                "Customer full name, "
+                                "phone number, and "
+                                "property type are "
+                                "required."
+
+                        }
+
+                    else:
+
+                        customer = (
+                            Customer.query.filter_by(
+                                user_id=
+                                    business.user_id,
+                                phone=
+                                    phone.strip()
+                            ).first()
+                        )
+
+                        if not customer:
+
+                            lead_data_response = {
+
+                                "success":
+                                    False,
+
+                                "message":
+                                    "Customer was not "
+                                    "found. Save the "
+                                    "customer first."
+
+                            }
+
+                        else:
+
+                            lead_data = {
+
+                                "name":
+                                    full_name,
+
+                                "phone":
+                                    phone,
+
+                                "email":
+                                    email,
+
+                                "property_type":
+                                    property_type,
+
+                                "city":
+                                    city,
+
+                                "budget":
+                                    budget,
+
+                                "purpose":
+                                    purpose,
+
+                                "bedrooms":
+                                    bedrooms
+
+                            }
+
+                            ai_score = (
+                                calculate_lead_score(
+                                    lead_data,
+                                    customer_interested=
+                                        customer_interested
+                                )
+                            )
+
+                            priority = (
+                                calculate_lead_priority(
+                                    ai_score
+                                )
+                            )
+
+                            lead = Lead(
+
+                                user_id=
+                                    business.user_id,
+
+                                customer_id=
+                                    customer.id,
+
+                                property_type=
+                                    property_type,
+
+                                budget=
+                                    int(budget)
+                                    if budget
+                                    is not None
+                                    else None,
+
+                                preferred_city=
+                                    city,
+
+                                bedrooms=
+                                    bedrooms,
+
+                                purpose=
+                                    purpose,
+
+                                priority=
+                                    priority,
+
+                                ai_score=
+                                    ai_score,
+
+                                status=
+                                    "New Lead",
+
+                                notes=
+                                    notes
+
+                            )
+
+                            db.session.add(
+                                lead
+                            )
+
+                            db.session.commit()
+
+                            print(
+                                "GEMINI CHAT LEAD:",
+                                lead.id,
+                                customer.full_name,
+                                lead.property_type,
+                                lead.preferred_city,
+                                lead.budget,
+                                lead.bedrooms,
+                                lead.ai_score,
+                                lead.priority
+                            )
+
+                            lead_data_response = {
+
+                                "success":
+                                    True,
+
+                                "lead": {
+
+                                    "id":
+                                        lead.id,
+
+                                    "customer_id":
+                                        lead.customer_id,
+
+                                    "property_type":
+                                        lead.property_type,
+
+                                    "budget":
+                                        lead.budget,
+
+                                    "preferred_city":
+                                        lead.preferred_city,
+
+                                    "bedrooms":
+                                        lead.bedrooms,
+
+                                    "purpose":
+                                        lead.purpose,
+
+                                    "priority":
+                                        lead.priority,
+
+                                    "ai_score":
+                                        lead.ai_score,
+
+                                    "status":
+                                        lead.status,
+
+                                    "property_title":
+                                        property_title
+
+                                }
+
+                            }
+
+                    function_responses.append(
+
+                        types.Part.from_function_response(
+
+                            name=
+                                function_call.name,
+
+                            response=
+                                lead_data_response
+
+                        )
+
+                    )
+            # ==============================================
+            # SEND FUNCTION RESULT BACK TO GEMINI
+            # ==============================================
+
+            contents = [
+
+                conversation,
+
+                response.candidates[
+                    0
+                ].content,
+
+                types.Content(
+
+                    role="user",
+
+                    parts=
+                        function_responses
+
+                )
+
+            ]
+
+            try:
+                final_start_time = time.time()
+                final_response = (
+                    gemini_client
+                    .models
+                    .generate_content(
+
+                        model=GEMINI_CHAT_MODEL,
+
+                        contents=contents,
+
+                        config=types.GenerateContentConfig(
+
+                           
+                            system_instruction=(
+
+                                "You are an AI chat assistant "
+                                "for the business. "
+
+                                "Use only verified information "
+                                "returned by the available functions. "
+
+                                "Do not invent or assume any "
+                                "business or property information. "
+
+                                "When the property search function "
+                                "returns a property, use the property "
+                                "returned by the LATEST function call "
+                                "as the current property. "
+
+                                "Do not reuse a property from an "
+                                "earlier conversation turn if the "
+                                "latest function call returned a "
+                                "different property. "
+
+                                "When the customer asks for another "
+                                "property, present the property "
+                                "returned by the latest search "
+                                "function call. "
+
+                                "Do not present a previously rejected "
+                                "property. "
+
+                                "Use the exact property title returned "
+                                "by the function. "
+
+                                "Use only the returned price, location, "
+                                "property type, bedrooms, bathrooms, "
+                                "sqft, status, and description. "
+
+                                "If the latest search returns no "
+                                "properties, clearly tell the customer "
+                                "that no matching property was found "
+                                "and suggest changing the requirements. "
+
+                                "After presenting a matching property, "
+                                "always explicitly ask the customer "
+                                "whether they are interested in that "
+                                "property. "
+
+                                "Use a clear question such as "
+                                "'Are you interested in this property?' "
+
+                                "Do not replace the interest question "
+                                "with 'Would you like to see another "
+                                "property?' or 'Would you like more "
+                                "details?' "
+
+                                "Do not assume that the customer is "
+                                "interested or not interested. "
+
+                                "Wait for the customer's response "
+                                "before treating the property as "
+                                "accepted or rejected. "
+
+                                "If the customer has explicitly "
+                                "expressed positive interest, the "
+                                "previous function processing has "
+                                "already handled the lead data. "
+
+                                "If the customer has rejected the "
+                                "property, do not describe the "
+                                "property as accepted or interested. "
+
+                                "Do not call any function in "
+                                "the final response. The customer "
+                                "and requirement data have already "
+                                "been processed by the available "
+                                "functions. Respond only with "
+                                "natural language using the "
+                                "function results provided. "
+
+                                "Answer naturally and concisely."
+
+                            ),
+
+                            tools=[
+                                business_tool,
+                                property_tool,
+                                customer_tool,
+                                requirement_tool,
+                                lead_tool
+                            ],
+
+                            automatic_function_calling=(
+                                types
+                                .AutomaticFunctionCallingConfig(
+                                    disable=True
+                                )
+                            )
+
+                        )
+
+                    )
+                )
+                print(
+                    "GEMINI FINAL CALL TIME:",
+                    round(
+                        time.time() - final_start_time,
+                        2
+                    ),
+                    "seconds"
+                )
+
+            except Exception as e:
+
+                print(
+                    "Gemini final response error:",
+                    e
+                )
+
+                return jsonify({
+
+                    "success":
+                        False,
+
+                    "message":
+                        "The AI assistant is temporarily "
+                        "unavailable. Please try again."
+
+                }), 503
+
+            return jsonify({
+
+                "success":
+                    True,
+
+                "response":
+                    final_response.text,
+
+                "properties":
+                    chat_properties,
+
+                "rejected_property_ids":
+                    rejected_property_ids
+
+            })
+        # ==================================================
+        # NORMAL TEXT RESPONSE
+        # ==================================================
+
+        return jsonify({
+            "success": True,
+            "response": response.text,
+            "rejected_property_ids": rejected_property_ids
+        })
+
+    except Exception as e:
+
+        print(
+            "Gemini Chat error:",
+            e
+        )
+
+        return jsonify({
+
+            "success":
+                False,
+
+            "message":
+                "Could not process the chat request."
+
         }), 500
 # ==========================================================
 # GEMINI LIVE PROPERTY SEARCH
