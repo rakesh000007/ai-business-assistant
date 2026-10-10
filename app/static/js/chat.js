@@ -288,19 +288,25 @@ document.addEventListener("DOMContentLoaded", () => {
       // by the customer's NEXT response.
       // --------------------------------------------------
 
-      currentPropertyIds = (data.properties || [])
-        .map((p) => p.property_id)
-        .filter((id) => id !== null && id !== undefined);
+      if (Array.isArray(data.properties)) {
+        currentPropertyIds = data.properties
+          .map((p) => p.property_id)
+          .filter((id) => id !== null && id !== undefined);
+      }
 
       rejectedPropertyIds =
         data.rejected_property_ids ||
         rejectedPropertyIds;
-        
+
       console.log(
         "NEW CURRENT PROPERTY IDS:",
         currentPropertyIds
       );
 
+      console.log(
+        "REJECTED PROPERTY IDS:",
+        rejectedPropertyIds
+      );
       // --------------------------------------------------
       // SAVE CURRENT CONVERSATION
       // --------------------------------------------------
