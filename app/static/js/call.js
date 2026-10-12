@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const businessId =
         document.getElementById("businessId")?.value;
+        
 
     const startBtn =
         document.getElementById("startCallBtn");
@@ -93,6 +94,8 @@ let geminiMicrophoneActive = false;
 let geminiOutputTranscript = "";
 let geminiInputTranscript = "";
 let geminiConversationTranscript = "";
+let savedCustomerId = null;
+
 let excludedPropertyIds = [];
 let currentPropertyId = null;
 
@@ -449,50 +452,7 @@ console.log(
     "REJECTED PROPERTY IDS:",
     rejectedPropertyIds
 );
-            // --------------------------------------------------
-            // UPDATE CURRENT PROPERTY IDS
-            // --------------------------------------------------
 
-            currentPropertyIds =
-                (data.properties || [])
-                    .map(
-                        (property) =>
-                            property.property_id
-                    )
-                    .filter(
-                        (id) =>
-                            id !== null &&
-                            id !== undefined
-                    );
-
-            console.log(
-                "CURRENT PROPERTY IDS:",
-                currentPropertyIds
-            );
-
-            // --------------------------------------------------
-            // HANDLE NEGATIVE RESPONSE
-            // --------------------------------------------------
-
-            if (isNegativeResponse) {
-
-                currentPropertyIds.forEach(
-                    (id) => {
-
-                        if (
-                            !rejectedPropertyIds.includes(id)
-                        ) {
-
-                            rejectedPropertyIds.push(
-                                id
-                            );
-
-                        }
-
-                    }
-                );
-
-            }
 
             console.log(
                 "REJECTED PROPERTY IDS:",
@@ -904,7 +864,7 @@ async function testGeminiLiveConnection() {
                                             "BLOCKING",
 
                                         description:
-                                            "Save a customer to the business CRM after the customer has provided their name and phone number.",
+                                            "Save a customer to the business CRM after the customer has provided their full name and phone number. Email is optional. If the customer provides an email address, save it. If the customer declines to provide an email or does not have one, continue without it. Never require email to save a customer and never repeatedly ask for email after the customer declines.",
 
                                         parameters: {
 
@@ -919,7 +879,7 @@ async function testGeminiLiveConnection() {
                                                         "STRING",
 
                                                     description:
-                                                        "Customer's full name."
+                                                        "Customer's full name. Required."
 
                                                 },
 
@@ -929,7 +889,7 @@ async function testGeminiLiveConnection() {
                                                         "STRING",
 
                                                     description:
-                                                        "Customer's phone number."
+                                                        "Customer's phone number. Required."
 
                                                 },
 
@@ -939,7 +899,7 @@ async function testGeminiLiveConnection() {
                                                         "STRING",
 
                                                     description:
-                                                        "Customer's email address, if provided."
+                                                        "Customer's email address, only if provided voluntarily. Optional; do not invent an email address."
 
                                                 },
 
@@ -963,6 +923,7 @@ async function testGeminiLiveConnection() {
                                         }
 
                                     },
+
 
                                     {
 
@@ -1134,136 +1095,169 @@ async function testGeminiLiveConnection() {
 
                                 {
 
-                            text:
+
+                                    text:
+
                                         "You are an AI voice assistant " +
-                                        "for the business. " +
+                                        "for the real-estate business. " +
+
+                                        // ------------------------------------------
+                                        // LANGUAGE AND CONVERSATION
+                                        // ------------------------------------------
+
+                                        "You are a multilingual voice assistant. " +
+                                        "Automatically identify and understand the " +
+                                        "language spoken by the customer. Respond " +
+                                        "naturally in the same language. Support " +
+                                        "language switching and mixed-language speech " +
+                                        "whenever supported by the active Gemini Live " +
+                                        "model. Do not force the customer to speak " +
+                                        "English. Preserve property titles, prices, " +
+                                        "locations, names, phone numbers, and database " +
+                                        "values accurately. " +
+
+                                        "Speak naturally, politely, and concisely. " +
+                                        "Use previous conversation context and reuse " +
+                                        "information already provided. Ask only for " +
+                                        "missing information. Do not repeatedly ask " +
+                                        "the same question after it has been answered. " +
+
+                                        // ------------------------------------------
+                                        // BUSINESS INFORMATION
+                                        // ------------------------------------------
+
                                         "When the customer asks about the business, " +
-                                        "company, owner, services, business background, " +
-                                        "or asks to know more about the business, " +
-                                        "you MUST call the get_business_information " +
-                                        "function. After the function returns, answer " +
-                                        "the customer naturally using only the verified " +
-                                        "business information returned by the function. " +
-                                        "If any business information field is empty or " +
-                                        "missing, do not invent or assume the information. " +
-                                        "Whenever a customer asks to find, search, " +
-                                        "recommend, or show properties, you MUST " +
-                                        "call the search_properties function. " +
-                                        "If the customer changes any requirement " +
-                                        "such as city, property type, bedrooms, " +
-                                        "or budget, treat it as an update to the " +
-                                        "previous property search and call " +
-                                        "search_properties again using the updated " +
-                                        "requirements. " +
-                                        "Use previous conversation context when " +
-                                        "understanding follow-up requests. " +
-                                        "When the customer provides their full name " +
-                                        "and phone number, call the save_customer " +
-                                        "function. " +
-                                        "Do not call save_customer until both the " +
-                                        "full name and phone number are available. " +
+                                        "company, owner, services, or business " +
+                                        "background, you MUST call the " +
+                                        "get_business_information function. Answer " +
+                                        "using only verified information returned by " +
+                                        "the function. Never invent missing details. " +
+
+                                        // ------------------------------------------
+                                        // PROPERTY SEARCH
+                                        // ------------------------------------------
+
+                                        "Whenever the customer asks to find, search, " +
+                                        "recommend, or show properties, you MUST call " +
+                                        "the search_properties function. Use the latest " +
+                                        "known city, property type, bedrooms, and budget. " +
+                                        "Reuse previous values when the customer changes " +
+                                        "only one requirement. " +
+
+                                        "Use new_search when starting a search or when " +
+                                        "the customer changes their requirements. Use " +
+                                        "next_property when the customer rejects the " +
+                                        "current property or asks to see another without " +
+                                        "changing their requirements. " +
+
+                                        "When only the budget changes and the city, " +
+                                        "property type, and bedrooms remain the same, " +
+                                        "preserve the previously rejected property " +
+                                        "exclusions while searching with the updated " +
+                                        "budget. When the city, property type, or " +
+                                        "bedrooms change, treat it as a different search. " +
+
+                                        "Present one matching property at a time. Use " +
+                                        "the exact property title returned by the " +
+                                        "database. Provide only verified property " +
+                                        "details returned by search_properties. Never " +
+                                        "invent listings, prices, availability, " +
+                                        "locations, or amenities. " +
+
+                                        "Ask whether the customer is interested in " +
+                                        "the property presented. If rejected, offer " +
+                                        "another eligible property that has not been " +
+                                        "rejected. If no matching properties remain, " +
+                                        "explain that and ask whether the customer " +
+                                        "wants to change their requirements. Never " +
+                                        "claim a property was excluded unless the " +
+                                        "search results confirm it. " +
+
+                                        // ------------------------------------------
+                                        // CUSTOMER INFORMATION
+                                        // ------------------------------------------
+
+                                        "The customer's full name and phone number " +
+                                        "are mandatory for saving a customer. When " +
+                                        "both are available, call save_customer. Do " +
+                                        "not wait for an email address before saving. " +
+
+                                        "Email is optional. You may politely ask for " +
+                                        "the customer's email address. If provided, " +
+                                        "pass it to save_customer. If the customer " +
+                                        "declines, wants to skip it, or has no email, " +
+                                        "accept that immediately and do not ask again. " +
+                                        "Never invent an email address. " +
+
                                         "If the customer provides only their name " +
                                         "or only their phone number, ask for the " +
-                                        "missing information. " +
-                                        "When the customer provides a property " +
-                                        "requirement such as property type, location, " +
-                                        "budget, or bedrooms, call the " +
-                                        "save_customer_requirement function using " +
-                                        "the customer's phone number and the latest " +
-                                        "property requirements. " +
-                                        "If the customer changes any property " +
-                                        "requirement later, call " +
-                                        "save_customer_requirement again with the " +
-                                        "updated requirement. " +
-                                        "Always use the latest customer requirement " +
-                                        "when saving or updating the requirement. " +
-                                        "Do not provide general property suggestions " +
-                                        "instead of calling the function. " +
-                                        "Do not invent property listings, prices, " +
-                                        "locations, availability, or amenities. " +
-                                         "Only provide actual property information " +
-                                        "returned by the search_properties function. " +
+                                        "missing mandatory information. Do not ask " +
+                                        "again for information already provided. " +
 
-                                        "Always use the exact property title returned by " +
-                                        "the search_properties function. Do not rename, shorten, " +
-                                        "or modify the property title. " +
+                                        // ------------------------------------------
+                                        // CUSTOMER REQUIREMENTS
+                                        // ------------------------------------------
 
-                                        "When the customer asks for more details about a property " +
-                                        "such as 'tell me more', 'give me details', or similar, " +
-                                        "provide the available verified details returned by the " +
-                                        "search_properties function, including the property title, " +
-                                        "property type, city, address, bedrooms, bathrooms, sqft, " +
-                                        "price, status, and description when available. " +
+                                        "When the customer discusses property " +
+                                        "requirements, use the latest known property " +
+                                        "type, preferred location, budget, bedrooms, " +
+                                        "and preferences. Call save_customer_requirement " +
+                                        "when its required arguments are available. " +
 
-                                        "Do not invent or assume any missing property details. " +
-                                        "Use the description returned by the database when it contains " +
-                                        "additional information about the property. " +
+                                        "If the customer changes their requirements, " +
+                                        "update the saved requirement using the latest " +
+                                        "values. Do not invent a phone number or " +
+                                        "required argument. " +
 
-                                        "After the latest search_properties call returns " +
-                                        "at least one matching property, present one " +
-                                        "matching property at a time to the customer. " +
-                                        "Do not list all matching properties at once. " +
-                                        "Ask the customer whether they are interested " +
-                                        "in the property you presented. " +
+                                        // ------------------------------------------
+                                        // LEAD CREATION AND FOLLOW-UP
+                                        // ------------------------------------------
 
-                                        "If the customer says they are not interested, " +
-                                        "asks for another property, asks to see another, " +
-                                        "or rejects the current property, continue with " +
-                                        "another matching property that has not already " +
-                                        "been rejected or shown. " +
+                                        "Do not create a lead merely because the " +
+                                        "customer searched for properties or provided " +
+                                        "requirements. A matching property must have " +
+                                        "been found and the customer must express " +
+                                        "interest in it. " +
 
-                                        "If the customer changes any requirement such as " +
-                                        "city, property type, bedrooms, or budget, treat " +
-                                        "it as a completely new property search. Use the " +
-                                        "new requirements, call search_properties again, " +
-                                        "and start showing properties from the new search. " +
+                                        "Before calling create_lead, make sure " +
+                                        "save_customer has succeeded and " +
+                                        "save_customer_requirement has succeeded. " +
+                                        "The customer's full name and phone number " +
+                                        "must be available. " +
 
-                                        "If the customer shows interest in the currently " +
-                                        "presented matching property, continue the " +
-                                        "conversation naturally and ask for the customer's " +
-                                        "full name and phone number. " +
+                                        "Ask naturally for the customer's preferred " +
+                                        "follow-up date. If the customer gives a clear " +
+                                        "date, convert it to YYYY-MM-DD. If the date " +
+                                        "is ambiguous, ask one brief clarification. " +
 
-                                        "Do not call create_lead merely because the " +
-                                        "customer has provided a property requirement. " +
+                                        "If the customer explicitly declines to " +
+                                        "specify a date, use an empty string if " +
+                                        "accepted by the create_lead tool. Never " +
+                                        "invent a follow-up date. Do not interpret " +
+                                        "vague statements such as 'when you are free' " +
+                                        "as a confirmed date. " +
 
-                                        "Do not call create_lead when no matching " +
-                                        "property has been found. " +
-
-                                        "Do not call create_lead until the customer " +
-                                        "has shown interest in a matching property " +
-                                        "and has provided their full name and phone " +
-                                        "number. " +
-
-                                        "Once the customer has shown interest and " +
-                                        "both full name and phone number are available, " +
-                                        "ask the customer for their preferred follow-up date. " +
-                                        "Ask: What date would you prefer for a follow-up? " +
-                                        "If the customer provides a date, convert it to " +
-                                        "YYYY-MM-DD format. " +
-                                        "If the customer does not want to specify a date, " +
-                                        "use an empty string. " +
-                                        "Do not call create_lead until the customer has " +
-                                        "shown interest in a matching property, provided " +
-                                        "their full name and phone number, and either " +
-                                        "provided a follow-up date or explicitly said " +
-                                        "they do not want to specify one. " +
-                                        "Then make sure save_customer has been called first, " +
-                                        "then make sure save_customer_requirement " +
-                                        "has been called, and then call create_lead. " +
-                                        "When calling create_lead, use the customer's " +
-                                        "phone number and provide the complete " +
-                                        "conversation transcript available in the " +
-                                        "current conversation. " +
+                                        "Call create_lead only after the required " +
+                                        "conditions are met. Pass the confirmed phone " +
+                                        "number, the agreed follow-up date or permitted " +
+                                        "empty string, and the complete available " +
+                                        "conversation transcript. If a required save " +
+                                        "operation fails, do not claim it succeeded " +
+                                        "or create a lead as though it succeeded. " +
 
                                         "After create_lead succeeds, confirm naturally " +
-                                        "that the customer's details have been recorded."
+                                        "that the details have been recorded. Never " +
+                                        "claim that a customer, requirement, or lead " +
+                                        "was saved unless the corresponding tool " +
+                                        "confirms success."
+
 
                                 }
 
                             ]
 
                         }
-
+                    
                     }
 
                 };
@@ -1380,31 +1374,68 @@ geminiSocket.onmessage =
                                     const searchMode =
                                         functionCall.args?.search_mode;
 
+
                                     if (
                                         searchMode ===
                                         "new_search"
                                     ) {
 
+                                    const previousSearch =
+                                        lastPropertySearch || {};
+
+                                    const newSearch = {
+                                        city:
+                                            functionCall.args?.city ??
+                                            previousSearch.city ??
+                                            null,
+
+                                        property_type:
+                                            functionCall.args?.property_type ??
+                                            previousSearch.property_type ??
+                                            null,
+
+                                        bedrooms:
+                                            functionCall.args?.bedrooms ??
+                                            previousSearch.bedrooms ??
+                                            null,
+
+                                        budget:
+                                            functionCall.args?.budget ??
+                                            previousSearch.budget ??
+                                            null
+                                    };
+
+                                    const normalize = (value) =>
+                                        value == null
+                                            ? ""
+                                            : String(value)
+                                                .trim()
+                                                .toLowerCase();
+
+                                    const isSameSearch =
+                                        lastPropertySearch &&
+                                        normalize(newSearch.city) ===
+                                            normalize(previousSearch.city) &&
+                                        normalize(newSearch.property_type) ===
+                                            normalize(previousSearch.property_type) &&
+                                        newSearch.bedrooms ===
+                                            previousSearch.bedrooms;
+
+                                    if (!isSameSearch) {
+
                                         excludedPropertyIds = [];
 
-                                        currentPropertyId =
-                                            null;
+                                    }
 
-                                        lastPropertySearch = {
-                                            city:
-                                                functionCall.args?.city,
+                                    currentPropertyId =
+                                        null;
 
-                                            property_type:
-                                                functionCall.args?.property_type,
+                                    lastPropertySearch =
+                                        newSearch;
 
-                                            bedrooms:
-                                                functionCall.args?.bedrooms,
-
-                                            budget:
-                                                functionCall.args?.budget
-                                        };
 
                                     }
+
 
                                     if (
                                         searchMode ===
@@ -1425,6 +1456,7 @@ geminiSocket.onmessage =
                                         }
 
                                     }
+
                                     console.log(
                                         "GEMINI PROPERTY SEARCH REQUEST:",
                                         {
@@ -1432,16 +1464,18 @@ geminiSocket.onmessage =
                                                 searchMode,
 
                                             city:
-                                                functionCall.args?.city,
+                                                searchMode === "next_property"
+                                                    ? lastPropertySearch.city
+                                                    : lastPropertySearch.city,
 
                                             property_type:
-                                                functionCall.args?.property_type,
+                                                lastPropertySearch.property_type,
 
                                             bedrooms:
-                                                functionCall.args?.bedrooms,
+                                                lastPropertySearch.bedrooms,
 
                                             budget:
-                                                functionCall.args?.budget,
+                                                lastPropertySearch.budget,
 
                                             excluded_property_ids:
                                                 excludedPropertyIds
@@ -1654,6 +1688,21 @@ geminiSocket.onmessage =
 
                                     const saveData =
                                         await saveResponse.json();
+
+                                    if (
+                                        saveResponse.ok &&
+                                        saveData.success &&
+                                        saveData.customer?.id
+                                    ) {
+                                        savedCustomerId = Number(
+                                            saveData.customer.id
+                                        );
+
+                                        console.log(
+                                            "SAVED CUSTOMER ID FOR CONVERSATION:",
+                                            savedCustomerId
+                                        );
+                                    }
 
                                     console.log(
                                         "GEMINI CUSTOMER SAVE RESULT:",
@@ -3819,16 +3868,79 @@ async function transcribeRecordedAudio(
 
 });
 
+
     // --------------------------------------------------
     // END CALL
     // --------------------------------------------------
 
     endBtn.addEventListener(
         "click",
-        () => {
+        async () => {
 
             isCalling =
                 false;
+
+
+            // --------------------------------------------------
+            // SAVE CONVERSATION TO DATABASE
+            // --------------------------------------------------
+
+            if (
+                savedCustomerId &&
+                businessId &&
+                geminiConversationTranscript.trim()
+            ) {
+
+                try {
+
+                    const conversationResponse =
+                        await fetch(
+                            "/ai/api/gemini-live/save-conversation",
+                            {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    business_id: businessId,
+                                    customer_id: savedCustomerId,
+                                    transcript: geminiConversationTranscript
+                                })
+                            }
+                        );
+
+                    const conversationData =
+                        await conversationResponse.json();
+
+                    console.log(
+                        "CONVERSATION SAVE RESULT:",
+                        conversationData
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "CONVERSATION SAVE ERROR:",
+                        error
+                    );
+
+                }
+
+            } else {
+
+                console.warn(
+                    "CONVERSATION NOT SAVED:",
+                    {
+                        savedCustomerId,
+                        businessId,
+                        transcriptAvailable:
+                            Boolean(
+                                geminiConversationTranscript.trim()
+                            )
+                    }
+                );
+
+            }
 
 
             // --------------------------------------------------
@@ -3866,8 +3978,16 @@ async function transcribeRecordedAudio(
 
             geminiOutputTranscript =
                 "";
+
             geminiConversationTranscript =
                 "";
+
+            geminiInputTranscript =
+                "";
+
+            savedCustomerId =
+                null;
+
 
             if (deepgramKeepAliveTimer) {
 

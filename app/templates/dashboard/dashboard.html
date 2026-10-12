@@ -5,26 +5,44 @@
 
 {% block content %}
 
+
 <!-- Live Signal Ticker -->
 <div class="signal-strip">
-  <div class="signal-tag"><span class="pulse-dot"></span> LIVE</div>
+  <div class="signal-tag">
+    <span class="pulse-dot"></span> LIVE
+  </div>
+
   <div class="signal-track">
     <div class="signal-set">
-      <span><i class="bi bi-person-plus"></i> Rahul Sharma registered as new customer</span>
-      <span><i class="bi bi-robot"></i> AI closed conversation with Priya Mehta</span>
-      <span><i class="bi bi-house-check"></i> Green Heights marked available</span>
-      <span><i class="bi bi-telephone-inbound"></i> Inbound call answered in 4s</span>
-      <span><i class="bi bi-graph-up-arrow"></i> Weekly leads up 12%</span>
+      {% for activity in recent_activity %}
+        <span>
+          <i class="bi {{ activity.icon }}"></i>
+          {{ activity.title }} — {{ activity.description }}
+        </span>
+      {% else %}
+        <span>
+          <i class="bi bi-activity"></i>
+          No recent business activity
+        </span>
+      {% endfor %}
     </div>
+
     <div class="signal-set" aria-hidden="true">
-      <span><i class="bi bi-person-plus"></i> Rahul Sharma registered as new customer</span>
-      <span><i class="bi bi-robot"></i> AI closed conversation with Priya Mehta</span>
-      <span><i class="bi bi-house-check"></i> Green Heights marked available</span>
-      <span><i class="bi bi-telephone-inbound"></i> Inbound call answered in 4s</span>
-      <span><i class="bi bi-graph-up-arrow"></i> Weekly leads up 12%</span>
+      {% for activity in recent_activity %}
+        <span>
+          <i class="bi {{ activity.icon }}"></i>
+          {{ activity.title }} — {{ activity.description }}
+        </span>
+      {% else %}
+        <span>
+          <i class="bi bi-activity"></i>
+          No recent business activity
+        </span>
+      {% endfor %}
     </div>
   </div>
 </div>
+
 
 <!-- Statistics Cards (dynamic from dashboard.py context) -->
 <section class="stat-grid">
@@ -36,7 +54,16 @@
       <span class="stat-caption">Registered customers</span>
     </div>
     <span class="stat-trend up"><i class="bi bi-arrow-up-short"></i>{{ customers_this_week|default(0) }} this week</span>
-    <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,25 15,22 30,18 45,20 60,12 75,14 100,4"/></svg>
+    
+    <svg
+      class="spark"
+      viewBox="0 0 100 30"
+      preserveAspectRatio="none"
+      data-spark='{{ daily_customer_growth | tojson }}'
+    >
+     <polyline points="0,25 15,22 30,18 45,20 60,12 75,14 100,4"/>
+    </svg>
+
   </div>
 
   <div class="glass-card stat-card">
@@ -46,20 +73,56 @@
       <span class="stat-number" data-count="{{ total_properties|default(0) }}">0</span>
       <span class="stat-caption">Available properties</span>
     </div>
-    <span class="stat-trend up"><i class="bi bi-arrow-up-short"></i>{{ properties_today|default(0) }} today</span>
-    <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,20 15,21 30,16 45,17 60,10 75,13 100,8"/></svg>
+    
+    <span class="stat-trend up">
+      <i class="bi bi-arrow-up-short"></i>
+      {{ properties_today|default(0) }} today
+    </span>
+
+    <svg
+      class="spark"
+      viewBox="0 0 100 30"
+      preserveAspectRatio="none"
+      data-spark='{{ daily_property_growth | tojson }}'
+    >
+      <polyline points="0,20 15,21 30,16 45,17 60,10 75,13 100,8"/>
+    </svg>
+
   </div>
 
-  <div class="glass-card stat-card">
-    <div class="stat-icon icon-cyan"><i class="bi bi-stars"></i></div>
-    <div class="stat-body">
-      <span class="stat-label">AI Conversations</span>
-      <span class="stat-number" data-count="{{ total_conversations|default(0) }}">0</span>
-      <span class="stat-caption">Completed chats</span>
-    </div>
-    <span class="stat-trend neutral">{{ ai_success_rate|default(98) }}% success rate</span>
-    <svg class="spark" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline points="0,15 15,17 30,12 45,14 60,9 75,11 100,5"/></svg>
+
+<div class="glass-card stat-card">
+  <div class="stat-icon icon-cyan">
+    <i class="bi bi-stars"></i>
   </div>
+
+  <div class="stat-body">
+    <span class="stat-label">AI Conversations</span>
+    <span
+      class="stat-number"
+      data-count="{{ total_conversations|default(0) }}"
+    >0</span>
+    <span class="stat-caption">Total conversations</span>
+  </div>
+
+  <span class="stat-trend neutral">
+     {{ completed_conversations|default(0) }} completed
+  </span>
+
+  
+  
+  <svg
+    class="spark"
+    viewBox="0 0 100 30"
+    preserveAspectRatio="none"
+    data-spark='{{ daily_conversation_growth | tojson }}'
+  >
+    <polyline points="0,20 15,21 30,16 45,17 60,10 75,13 100,8"/>
+  </svg>
+
+
+</div>
+
 
   <div class="glass-card stat-card">
     <div class="stat-icon icon-amber"><i class="bi bi-telephone-fill"></i></div>
@@ -82,33 +145,83 @@
         <button class="active">1M</button><button>3M</button><button>1Y</button>
       </div>
     </div>
-    <svg class="growth-chart" viewBox="0 0 560 220" preserveAspectRatio="none">
+    <svg
+       class="growth-chart"
+       data-growth='{{ customer_growth | tojson }}'
+       data-daily-growth='{{ daily_customer_growth | tojson }}'
+       viewBox="0 0 560 220"
+       preserveAspectRatio="none"
+    >
       <defs>
         <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="#7c5cfc" stop-opacity="0.45"/>
           <stop offset="100%" stop-color="#7c5cfc" stop-opacity="0"/>
         </linearGradient>
       </defs>
-      <polyline class="area" fill="url(#areaFill)" points="0,190 80,170 160,150 240,160 320,110 400,120 480,70 560,50 560,220 0,220"/>
-      <polyline class="line" points="0,190 80,170 160,150 240,160 320,110 400,120 480,70 560,50"/>
-      <circle cx="560" cy="50" r="5" class="end-dot"/>
+      <polyline class="area" fill="url(#areaFill)" points="0,190 560,190"/>
+      <polyline class="line" points="0,190 560,190"/>
+      <g class="growth-points"></g>
+      <circle cx="560" cy="50" r="5" class="end-dot">
+       <title></title>
+      </circle>
     </svg>
+
     <div class="chart-axis">
-      <span>1 May</span><span>10 May</span><span>20 May</span><span>31 May</span>
+      {% for item in customer_growth %}
+        {% if loop.first or loop.last or loop.index in [4, 7, 10] %}
+          <span>{{ item.label }}</span>
+        {% endif %}
+      {% endfor %}
     </div>
   </div>
 
+
+
+
   <div class="glass-card panel-card mix-card">
-    <div class="panel-head"><h2>Property Mix</h2></div>
-    <div class="donut" style="--p1:40; --p2:70; --p3:90;"></div>
+    <div class="panel-head">
+      <h2>Property Mix</h2>
+    </div>
+
+    {% set total_mix = property_mix | sum(attribute='count') %}
+
+    {% set colors = {
+        'Apartment': '#7c5cfc',
+        'Villa': '#a78bfa',
+        'House': '#4f46e5',
+        'Plot': '#22d3ee',
+        'Commercial': '#f5a623'
+    } %}
+
+    <div
+      class="donut"
+      style="background: {{ property_mix_gradient }};"
+    ></div>
+
     <ul class="mix-legend">
-      <li><span class="dot" style="background:#7c5cfc"></span>Apartments <b>40%</b></li>
-      <li><span class="dot" style="background:#4f46e5"></span>Houses <b>30%</b></li>
-      <li><span class="dot" style="background:#22d3ee"></span>Plots <b>20%</b></li>
-      <li><span class="dot" style="background:#f5a623"></span>Commercial <b>10%</b></li>
+      {% for item in property_mix %}
+        <li>
+          <span
+            class="dot"
+            style="background: {{ colors[item.type] }};"
+          ></span>
+
+          {{ item.type }}
+
+          <b>
+            {% if total_mix > 0 %}
+              {{ ((item.count / total_mix) * 100) | round | int }}%
+            {% else %}
+              0%
+            {% endif %}
+          </b>
+        </li>
+      {% endfor %}
     </ul>
   </div>
 </section>
+
+
 
 <!-- AI Status -->
 <section class="glass-card pulse-card">
@@ -119,14 +232,26 @@
     </div>
     <div>
       <h2>AI Assistant</h2>
-      <span class="online-chip"><span class="pulse-dot"></span> Online &amp; responding</span>
+      <span class="online-chip">
+        <span class="pulse-dot"></span> Assistant configured
+      </span>
     </div>
   </div>
   <div class="pulse-stats">
     <div><span>Voice Assistant</span><b>Ready</b></div>
     <div><span>Knowledge Base</span><b>Connected</b></div>
-    <div><span>Today's Responses</span><b class="mono">{{ todays_responses|default(96) }}</b></div>
-    <div><span>Success Rate</span><b class="mono">{{ ai_success_rate|default(98) }}%</b></div>
+
+    <div>
+      <span>Today's Responses</span>
+      <b class="mono">{{ todays_responses }}</b>
+    </div>
+    <div>
+       <span>Completion Rate</span>
+       <b class="mono">
+           {{ conversation_completion_rate|default(0) }}%
+       </b>
+    </div>
+
   </div>
 </section>
 
@@ -137,76 +262,125 @@
     <div><h3>Add Customer</h3><p>Register a new customer</p></div>
     <i class="bi bi-arrow-right action-arrow"></i>
   </a>
-  <a href="#" class="glass-card action-card">
+
+  <a href="{{ url_for('property.add_property') }}" class="glass-card action-card">
     <div class="action-icon icon-indigo"><i class="bi bi-house-add-fill"></i></div>
     <div><h3>Add Property</h3><p>List a new property</p></div>
     <i class="bi bi-arrow-right action-arrow"></i>
   </a>
-  <a href="#" class="glass-card action-card">
+
+
+  <a href="{{ url_for('ai.dashboard') }}" class="glass-card action-card">
     <div class="action-icon icon-cyan"><i class="bi bi-stars"></i></div>
     <div><h3>Start AI Assistant</h3><p>Launch AI assistant</p></div>
     <i class="bi bi-arrow-right action-arrow"></i>
   </a>
-  <a href="#" class="glass-card action-card">
+
+  
+  <a href="{{ url_for('reports.report_home') }}" class="glass-card action-card">
     <div class="action-icon icon-amber"><i class="bi bi-file-earmark-bar-graph-fill"></i></div>
     <div><h3>Generate Report</h3><p>Create business reports</p></div>
     <i class="bi bi-arrow-right action-arrow"></i>
   </a>
+
 </section>
+
 
 <!-- Recent Activity + Recent Customers -->
 <section class="split-grid">
+
+  <!-- Recent Activity: Real database records -->
   <div class="glass-card panel-card">
-    <div class="panel-head"><h2>Recent Activity</h2></div>
+    <div class="panel-head">
+      <h2>Recent Activity</h2>
+    </div>
+
     <ul class="timeline">
+      {% for activity in recent_activity|default([]) %}
       <li>
-        <span class="tl-icon icon-purple"><i class="bi bi-person-fill"></i></span>
-        <div><b>Rahul Sharma</b><p>New customer registered</p></div>
-        <time>2m ago</time>
+        <span class="tl-icon {{ activity.color }}">
+          <i class="bi {{ activity.icon }}"></i>
+        </span>
+
+        <div>
+          <b>{{ activity.title }}</b>
+          <p>{{ activity.description }}</p>
+        </div>
+
+        <time>
+          {% if activity.timestamp %}
+            {{ activity.timestamp.strftime('%d %b, %I:%M %p') }}
+          {% else %}
+            Time unavailable
+          {% endif %}
+        </time>
       </li>
+      {% else %}
       <li>
-        <span class="tl-icon icon-indigo"><i class="bi bi-house-fill"></i></span>
-        <div><b>Property Added</b><p>Apartment listed successfully</p></div>
-        <time>10m ago</time>
+        <span class="tl-icon icon-purple">
+          <i class="bi bi-activity"></i>
+        </span>
+
+        <div>
+          <b>No recent activity</b>
+          <p>New customer, property, and AI conversation events will appear here.</p>
+        </div>
       </li>
-      <li>
-        <span class="tl-icon icon-cyan"><i class="bi bi-robot"></i></span>
-        <div><b>AI Conversation</b><p>Customer inquiry completed</p></div>
-        <time>18m ago</time>
-      </li>
-      <li>
-        <span class="tl-icon icon-amber"><i class="bi bi-telephone-fill"></i></span>
-        <div><b>Phone Call</b><p>Lead information collected</p></div>
-        <time>30m ago</time>
-      </li>
+      {% endfor %}
     </ul>
   </div>
 
+  <!-- Recent Customers: Existing database-driven table -->
   <div class="glass-card panel-card">
-    <div class="panel-head"><h2>Recent Customers</h2><a href="{{ url_for('customer.customer_list') }}" class="view-all">View all</a></div>
+    <div class="panel-head">
+      <h2>Recent Customers</h2>
+      <a href="{{ url_for('customer.customer_list') }}" class="view-all">
+        View all
+      </a>
+    </div>
+
     <div class="table-wrap">
       <table class="modern-table">
-        <thead><tr><th>Name</th><th>Phone</th><th>City</th><th>Status</th></tr></thead>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>City</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+
         <tbody>
           {% for c in recent_customers|default([]) %}
           <tr>
-             <td>
-                <span class="avatar avatar-purple">
-                    {{ c.full_name[:2]|upper }}
-                </span>
-                {{ c.full_name }}
-             </td>
+            <td>
+              <span class="avatar avatar-purple">
+                {{ c.full_name[:2]|upper }}
+              </span>
+              {{ c.full_name }}
+            </td>
+
             <td>{{ c.phone }}</td>
             <td>{{ c.city }}</td>
-            <td><span class="status {{ c.status|lower }}">{{ c.status }}</span></td>
+
+            <td>
+              <span class="status {{ c.status|lower }}">
+                {{ c.status }}
+              </span>
+            </td>
           </tr>
           {% else %}
-          <tr><td colspan="4" class="text-muted text-center py-4">No customers yet — add your first one.</td></tr>
+          <tr>
+            <td colspan="4" class="text-muted text-center py-4">
+              No customers yet — add your first one.
+            </td>
+          </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
+
 </section>
 
 {% endblock %}

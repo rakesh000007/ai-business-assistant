@@ -41,12 +41,16 @@ from app.ai.recommendation import get_matching_properties
 
 from app.services.whisper_service import transcribe_audio
 
+
 from app.models import (
     BusinessInformation,
     Customer,
     CustomerRequirement,
-    Lead
+    Lead,
+    Conversation,
+    ConversationMessage
 )
+
 
 # ==========================================================
 # GEMINI LIVE CLIENT
@@ -2435,6 +2439,129 @@ def gemini_live_save_customer():
             "success": False,
             "message": "Could not save customer."
         }), 500
+
+@ai_bp.route("/api/gemini-live/save-conversation", methods=["POST"])
+def gemini_live_save_conversation():
+    try:
+        data = request.get_json() or {}
+
+        business_id = data.get("business_id")
+        customer_id = data.get("customer_id")
+        transcript = data.get("transcript", "")
+
+        if not business_id or not customer_id:
+            return jsonify({
+                "success": False,
+                "message": "Business ID and customer ID are required."
+            }), 400
+
+        if not isinstance(transcript, str) or not transcript.strip():
+            return jsonify({
+                "success": False,
+                "message": "Conversation transcript is empty."
+            }), 400
+
+        business = db.session.get(
+            BusinessInformation, int(business_id)
+        )
+
+        if not business:
+            return jsonify({
+                "success": False,
+                "message": "Business not found."
+            }), 404
+
+        customer = db.session.get(Customer, int(customer_id))
+
+        if not customer or customer.user_id != business.user_id:
+            return jsonify({
+                "success": False,
+                "message": "Customer does not belong to this business."
+            }), 403
+
+        conversation = Conversation(
+            customer_id=customer.id,
+            status="Completed",
+            ended_at=db.func.now()
+        )
+
+        db.session.add(conversation)
+        db.session.flush()
+
+        saved_messages = 0
+
+        for line in transcript.splitlines():
+            line = line.strip()
+
+            if line.startswith("Customer:"):
+                sender = "Customer"
+                message = line[len("Customer:"):].strip()
+
+            elif line.startswith("AI:"):
+                sender = "AI"
+                message = line[len("AI:"):].strip()
+
+            else:
+                continue
+
+            if not message:
+                continue
+
+            db.session.add(
+                ConversationMessage(
+                    conversation_id=conversation.id,
+                    sender=sender,
+                    message=message
+                )
+            )
+
+            saved_messages += 1
+
+        if saved_messages == 0:
+            db.session.rollback()
+
+            return jsonify({
+                "success": False,
+                "message": "No valid conversation messages were found."
+            }), 400
+
+        db.session.commit()
+
+        print(
+            "CONVERSATION SAVED:",
+            conversation.id,
+            "CUSTOMER:",
+            customer.id,
+            "MESSAGES:",
+            saved_messages
+        )
+
+        return jsonify({
+            "success": True,
+            "conversation_id": conversation.id,
+            "customer_id": customer.id,
+            "messages_saved": saved_messages
+        })
+
+    except (TypeError, ValueError):
+        db.session.rollback()
+
+        return jsonify({
+            "success": False,
+            "message": "Invalid business ID or customer ID."
+        }), 400
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Conversation save failed"
+        )
+
+        return jsonify({
+            "success": False,
+            "message": "Could not save conversation."
+        }), 500
+
 # ==========================================================
 # GEMINI LIVE BUSINESS INFORMATION
 # ==========================================================

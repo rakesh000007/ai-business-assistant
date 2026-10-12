@@ -121,18 +121,32 @@
       </div>
     
 
+
       <div class="dropdown-wrap">
         <button class="icon-btn" id="bellBtn" aria-label="Notifications">
           <i class="bi bi-bell-fill"></i>
-          <span class="badge-dot">3</span>
+          {% if header_notification_count > 0 %}
+          <span class="badge-dot">{{ header_notification_count }}</span>
+          {% endif %}
         </button>
         <div class="dropdown-panel" id="bellPanel">
           <div class="dropdown-title">Notifications</div>
-          <div class="dropdown-item"><i class="bi bi-person-check text-purple"></i> New lead assigned to you</div>
-          <div class="dropdown-item"><i class="bi bi-robot text-cyan"></i> AI closed 4 conversations</div>
-          <div class="dropdown-item"><i class="bi bi-telephone text-amber"></i> Missed call from Priya Mehta</div>
+          {% if header_notifications %}
+            {% for notification in header_notifications %}
+          <div class="dropdown-item">
+            <i class="bi {{ notification.icon }} {{ notification.color }}"></i>
+            <span>
+              <strong>{{ notification.title }}</strong><br>
+              {{ notification.message }}
+            </span>
+          </div>
+            {% endfor %}
+          {% else %}
+          <div class="dropdown-item">No recent activity yet.</div>
+          {% endif %}
         </div>
       </div>
+
 
       <div class="dropdown-wrap">
         <button class="profile-btn" id="profileBtn">

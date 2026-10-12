@@ -1,0 +1,883 @@
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+<style>
+    .report-page {
+        color: #f3f4ff;
+        padding: 8px 4px 28px;
+    }
+
+    .report-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 26px;
+    }
+
+    .report-subtitle {
+        color: #a6a8c7;
+        margin: 6px 0 0;
+        font-size: 14px;
+    }
+
+    .report-date {
+        color: #a6a8c7;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+
+    .report-print-btn {
+        background: linear-gradient(135deg, #8065ff, #6845e8);
+        color: white;
+        border: 1px solid #a18bff;
+        border-radius: 12px;
+        padding: 11px 17px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .report-print-btn:hover {
+        filter: brightness(1.12);
+    }
+
+    .report-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .report-card {
+        background: linear-gradient(145deg, rgba(43, 34, 91, .88), rgba(20, 22, 49, .94));
+        border: 1px solid rgba(160, 139, 255, .2);
+        border-radius: 17px;
+        padding: 20px;
+        min-width: 0;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+    }
+
+    .report-card-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 18px;
+    }
+
+    .report-card-label {
+        color: #b8bad7;
+        font-size: 13px;
+    }
+
+    .report-icon {
+        display: grid;
+        place-items: center;
+        width: 39px;
+        height: 39px;
+        border-radius: 12px;
+        background: rgba(139, 112, 255, .17);
+        color: #b7a5ff;
+        font-size: 18px;
+    }
+
+    .report-card-value {
+        font-size: clamp(25px, 3vw, 34px);
+        font-weight: 700;
+        color: #fff;
+        line-height: 1.2;
+    }
+
+    .report-card-note {
+        color: #9396ba;
+        font-size: 12px;
+        margin-top: 8px;
+    }
+
+    .report-section {
+        background: rgba(20, 20, 48, .72);
+        border: 1px solid rgba(151, 135, 231, .19);
+        border-radius: 17px;
+        padding: 23px;
+        margin-bottom: 20px;
+    }
+
+    .report-section h3 {
+        font-size: 17px;
+        color: #f4f2ff;
+        margin: 0 0 7px;
+    }
+
+    .report-section-description {
+        color: #a2a4c3;
+        font-size: 13px;
+        margin-bottom: 22px;
+    }
+
+    .property-row {
+        margin-bottom: 21px;
+    }
+
+    .property-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .property-row-heading {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+        margin-bottom: 9px;
+    }
+
+    .property-row-heading span:first-child {
+        color: #e7e6fa;
+    }
+
+    .property-row-heading span:last-child {
+        color: #c5baff;
+        font-weight: 600;
+    }
+
+    .property-track {
+        width: 100%;
+        height: 9px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, .07);
+        overflow: hidden;
+    }
+
+    .property-fill {
+        height: 100%;
+        min-width: 0;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #7055ee, #b09aff);
+    }
+
+    .report-insight-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .report-insight {
+        background: rgba(113, 88, 223, .09);
+        border: 1px solid rgba(160, 139, 255, .15);
+        border-radius: 13px;
+        padding: 17px;
+    }
+
+    .report-insight-label {
+        color: #a8a9c8;
+        font-size: 12px;
+        margin-bottom: 8px;
+    }
+
+    .report-insight-value {
+        font-size: 21px;
+        font-weight: 700;
+        color: #f5f2ff;
+    }
+
+    .report-insight-detail {
+        color: #a5a4c6;
+        font-size: 12px;
+        margin-top: 6px;
+    }
+
+    .report-empty {
+        color: #a5a4c6;
+        padding: 18px 0;
+        font-size: 14px;
+    }
+
+    .report-footer {
+        color: #8e90b0;
+        font-size: 12px;
+        margin-top: 18px;
+    }
+
+    .report-analytics-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .growth-summary {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 12px;
+        margin-bottom: 22px;
+    }
+
+    .growth-total {
+        font-size: 27px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .growth-caption {
+        color: #a2a4c3;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    
+    .growth-chart {
+      display: flex;
+      align-items: stretch;
+      gap: 5px;
+      min-height: 150px;
+      height: 150px;
+      padding-top: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, .12);
+      box-sizing: border-box;
+    }
+
+
+    .growth-day {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .growth-bar-track {
+        width: 100%;
+        height: 118px;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+    }
+
+    .growth-bar {
+        width: min(100%, 15px);
+        min-height: 3px;
+        border-radius: 5px 5px 2px 2px;
+        background: linear-gradient(180deg, #b09aff, #7055ee);
+    }
+
+    .growth-day-label {
+        height: 15px;
+        color: #9698b8;
+        font-size: 9px;
+        white-space: nowrap;
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: start;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(160, 139, 255, .12);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .activity-icon {
+        flex: 0 0 36px;
+        height: 36px;
+        display: grid;
+        place-items: center;
+        border-radius: 11px;
+        background: rgba(139, 112, 255, .15);
+        color: #b7a5ff;
+        font-size: 16px;
+    }
+
+    .activity-details {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .activity-title {
+        color: #f3f1ff;
+        font-size: 13px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .activity-description {
+        color: #a6a8c7;
+        font-size: 12px;
+        margin-top: 4px;
+    }
+
+    .activity-time {
+        color: #898bac;
+        font-size: 10px;
+        margin-top: 6px;
+    }
+
+    @media (max-width: 1050px) {
+        .report-analytics-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media print {
+        .report-analytics-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .growth-bar {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+    }
+
+    @media (max-width: 1050px) {
+        .report-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .report-grid,
+        .report-insight-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .report-section {
+            padding: 17px;
+        }
+    }
+
+   
+@media print {
+    @page {
+        size: A4 portrait;
+        margin: 12mm;
+    }
+
+    body {
+        background: #fff !important;
+        color: #222 !important;
+        font-size: 10pt !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    .sidebar,
+    .topbar,
+    .report-print-btn,
+    nav,
+    footer,
+    .report-filter,
+    .report-filter + script {
+        display: none !important;
+    }
+
+    .main-content,
+    main {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+
+    .report-page {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        color: #222 !important;
+    }
+
+    .report-header {
+        margin-bottom: 12px !important;
+    }
+
+    .report-header h2 {
+        font-size: 22pt !important;
+        margin-bottom: 4px !important;
+    }
+
+    .report-card,
+    .report-section,
+    .report-insight {
+        background: #fff !important;
+        color: #222 !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .report-card {
+        padding: 12px !important;
+    }
+
+        .report-section {
+            padding: 10px !important;
+            margin-bottom: 6px !important;
+        }
+
+        .report-analytics-grid {
+            gap: 8px !important;
+        }
+
+        .report-insight-grid {
+            gap: 8px !important;
+        }
+
+        .report-footer {
+            margin-top: 5px !important;
+        }
+
+    .report-card-value,
+    .report-section h3,
+    .report-insight-value,
+    .property-row-heading span:first-child {
+        color: #222 !important;
+    }
+
+    .report-card-label,
+    .report-card-note,
+    .report-subtitle,
+    .report-date,
+    .report-section-description,
+    .report-insight-label,
+    .report-insight-detail,
+    .report-footer,
+    .growth-caption,
+    .activity-title,
+    .activity-description,
+    .activity-time {
+        color: #555 !important;
+    }
+
+    .report-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .report-analytics-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 12px !important;
+        align-items: start !important;
+    }
+
+    .report-insight-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .growth-chart {
+      height: 75px !important;
+      max-height: 75px !important;
+      overflow: hidden !important;
+    }
+
+    .growth-bar-track {
+        background: #eee !important;
+    }
+
+    .growth-bar,
+    .property-fill {
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .property-track {
+        background: #eee !important;
+        border: 1px solid #ddd !important;
+    }
+
+    .property-row {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .activity-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        padding: 8px 0 !important;
+    }
+
+    .report-footer {
+        margin-top: 10px !important;
+        font-size: 8pt !important;
+    }
+}
+
+    /* Reports date-range filters */
+    .report-filter {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 12px;
+        margin: 22px 0;
+        padding: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.025);
+    }
+
+    .report-filter label {
+        display: block;
+        margin-bottom: 6px;
+        color: #a9a5bd;
+        font-size: 12px;
+    }
+
+    .report-filter select,
+    .report-filter input[type="date"] {
+        min-height: 40px;
+        padding: 8px 10px;
+        color: #f1efff;
+        background: #211d35;
+        border: 1px solid #49415f;
+        border-radius: 8px;
+    }
+
+    .report-filter input[type="date"] {
+        color-scheme: dark;
+    }
+
+    .report-filter button {
+        min-height: 40px;
+        padding: 9px 16px;
+        color: white;
+        background: #7657e8;
+        border: 0;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .report-filter button:hover {
+        background: #6545d5;
+    }
+
+    .report-filter .filter-field {
+        display: flex;
+        flex-direction: column;
+    }
+
+    @media print {
+        .report-filter {
+            display: none !important;
+        }
+    }
+
+</style>
+
+<div class="report-page">
+    <div class="report-header">
+        <div>
+            <h2>Business Reports</h2>
+            <p class="report-subtitle">Your business performance at a glance</p>
+            <div class="report-date">
+                <i class="bi bi-calendar3"></i>
+                Report generated: {{ report_generated_at.strftime('%d %b %Y, %I:%M %p') }}
+            </div>
+        </div>
+
+        <button class="report-print-btn" onclick="window.print()">
+            <i class="bi bi-printer"></i> Print / Save PDF
+        </button>
+    </div>
+
+    <form method="GET" action="{{ url_for('reports.report_home') }}"
+          class="report-filter">
+
+        <div class="filter-field">
+            <label for="period">Reporting Period</label>
+            <select name="period" id="period" onchange="toggleCustomDates()">
+                <option value="today" {% if period == 'today' %}selected{% endif %}>Today</option>
+                <option value="7days" {% if period == '7days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30days" {% if period == '30days' %}selected{% endif %}>Last 30 Days</option>
+                <option value="month" {% if period == 'month' %}selected{% endif %}>This Month</option>
+                <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom Date Range</option>
+            </select>
+        </div>
+
+        <div class="filter-field custom-date-field">
+            <label for="start_date">Start Date</label>
+            <input type="date" id="start_date" name="start_date"
+                   value="{{ start_date }}" max="{{ end_date }}">
+        </div>
+
+        <div class="filter-field custom-date-field">
+            <label for="end_date">End Date</label>
+            <input type="date" id="end_date" name="end_date"
+                   value="{{ end_date }}" max="{{ end_date }}">
+        </div>
+
+        <button type="submit">
+            <i class="bi bi-funnel"></i> Apply Filter
+        </button>
+    </form>
+
+    <script>
+    function toggleCustomDates() {
+        const period = document.getElementById("period").value;
+
+        document.querySelectorAll(".custom-date-field").forEach(function (field) {
+            field.style.display = period === "custom" ? "flex" : "none";
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", toggleCustomDates);
+    </script>
+
+    <div class="report-grid">
+        <div class="report-card">
+            <div class="report-card-top">
+                <span class="report-card-label">Total Customers</span>
+                <span class="report-icon"><i class="bi bi-people-fill"></i></span>
+            </div>
+            <div class="report-card-value">{{ total_customers }}</div>
+            <div class="report-card-note">Customers in your CRM</div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-card-top">
+                <span class="report-card-label">Total Properties</span>
+                <span class="report-icon"><i class="bi bi-buildings-fill"></i></span>
+            </div>
+            <div class="report-card-value">{{ total_properties }}</div>
+            <div class="report-card-note">Properties in your inventory</div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-card-top">
+                <span class="report-card-label">AI Conversations</span>
+                <span class="report-icon"><i class="bi bi-robot"></i></span>
+            </div>
+            <div class="report-card-value">{{ total_conversations }}</div>
+            <div class="report-card-note">Total recorded conversations</div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-card-top">
+                <span class="report-card-label">Completion Rate</span>
+                <span class="report-icon"><i class="bi bi-check2-circle"></i></span>
+            </div>
+            <div class="report-card-value">
+                {{ ((completed_conversations / total_conversations) * 100) | round(1) if total_conversations else 0 }}%
+            </div>
+            <div class="report-card-note">
+                {{ completed_conversations }} of {{ total_conversations }} conversations completed
+            </div>
+        </div>
+    </div>
+
+    <div class="report-section">
+        <h3><i class="bi bi-calendar-range"></i> Selected Period Analytics</h3>
+        <p class="report-section-description">
+            {{ period_label }} · {{ start_date }} to {{ end_date }}
+        </p>
+
+        <div class="report-grid">
+            <div class="report-card">
+                <div class="report-card-top">
+                    <span class="report-card-label">New Customers</span>
+                    <span class="report-icon"><i class="bi bi-person-plus-fill"></i></span>
+                </div>
+                <div class="report-card-value">{{ period_customers }}</div>
+                <div class="report-card-note">Customers registered in this period</div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-card-top">
+                    <span class="report-card-label">Properties Added</span>
+                    <span class="report-icon"><i class="bi bi-house-add-fill"></i></span>
+                </div>
+                <div class="report-card-value">{{ period_properties }}</div>
+                <div class="report-card-note">Properties added in this period</div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-card-top">
+                    <span class="report-card-label">AI Conversations</span>
+                    <span class="report-icon"><i class="bi bi-chat-dots-fill"></i></span>
+                </div>
+                <div class="report-card-value">{{ period_conversations }}</div>
+                <div class="report-card-note">Conversations started in this period</div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-card-top">
+                    <span class="report-card-label">Completion Rate</span>
+                    <span class="report-icon"><i class="bi bi-check-circle-fill"></i></span>
+                </div>
+                <div class="report-card-value">
+                    {{ ((period_completed_conversations / period_conversations) * 100) | round(1) if period_conversations else 0 }}%
+                </div>
+                <div class="report-card-note">
+                    {{ period_completed_conversations }} of {{ period_conversations }} completed
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-section">
+        <h3><i class="bi bi-bar-chart-line"></i> Property Inventory Breakdown</h3>
+        <p class="report-section-description">
+            Distribution of properties by type, based on your current inventory.
+        </p>
+
+        {% set property_total = property_mix | sum(attribute=1) %}
+
+        {% if property_total > 0 %}
+            {% for property_type, count in property_mix %}
+                <div class="property-row">
+                    <div class="property-row-heading">
+                        <span>{{ property_type or "Unspecified" }}</span>
+                        <span>
+                            {{ count }} properties · {{ ((count / property_total) * 100) | round(1) }}%
+                        </span>
+                    </div>
+                    <div class="property-track">
+                        <div class="property-fill"
+                             style="width: {{ (count / property_total * 100) }}%;">
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="report-empty">No property records available yet.</div>
+        {% endif %}
+    </div>
+    
+    <div class="report-analytics-grid">
+        <div class="report-section">
+            <h3><i class="bi bi-graph-up-arrow"></i> Customer Growth</h3>
+            <p class="report-section-description">
+                Daily customer registrations for {{ period_label | lower }}.
+            </p>
+
+            {% set growth_total = customer_growth | sum(attribute='count') %}
+            {% set growth_max = customer_growth | map(attribute='count') | max %}
+            
+            <div class="growth-summary">
+                <div>
+                    <div class="growth-total">{{ growth_total }}</div>
+                    <div class="growth-caption">Registrations in the displayed period</div>
+                </div>
+                <div class="growth-caption">{{ period_label }}</div>
+            </div>
+
+            {% if customer_growth %}
+            <div class="growth-chart">
+                {% for day in customer_growth %}
+                <div class="growth-day"
+                     title="{{ day.label }}: {{ day.count }} new customers">
+                    <div class="growth-bar-track">
+                        <div class="growth-bar"
+                             style="height: {{ (day.count / growth_max * 100) if growth_max else 0 }}%;">
+                        </div>
+                    </div>
+                    <div class="growth-day-label">
+                        {% set chart_step = ((customer_growth | length / 10) | round(0, 'ceil') | int) %}
+                        {% if loop.first or loop.last or loop.index0 % chart_step == 0 %}
+                           {{ day.label }}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="growth-caption" style="margin-top: 10px;">
+                Date labels show the day of the month. Hover over a bar to see the date and count for {{ period_label | lower }}.
+            </div>
+            {% else %}
+            <div class="report-empty">No customer growth data available.</div>
+            {% endif %}
+        </div>
+
+        <div class="report-section">
+            <h3><i class="bi bi-clock-history"></i> Recent Business Activity</h3>
+            <p class="report-section-description">
+                Latest activity recorded in your CRM.
+            </p>
+
+            {% if recent_activity %}
+            <div class="activity-list">
+                {% for activity in recent_activity %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="bi {{ activity.icon }}"></i>
+                    </div>
+                    <div class="activity-details">
+                        <div class="activity-title">{{ activity.title }}</div>
+                        <div class="activity-description">{{ activity.description }}</div>
+                        <div class="activity-time">
+                            {% if activity.timestamp %}
+                                {{ activity.timestamp.strftime('%d %b %Y, %I:%M %p') }}
+                            {% else %}
+                                Date unavailable
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="report-empty">No recent activity available.</div>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div class="report-section">
+        <h3><i class="bi bi-clipboard-data"></i> Business Summary</h3>
+        <p class="report-section-description">
+            A quick summary of the records currently available in your CRM.
+        </p>
+
+        <div class="report-insight-grid">
+            <div class="report-insight">
+                <div class="report-insight-label">Average properties per customer</div>
+                <div class="report-insight-value">
+                    {{ (total_properties / total_customers) | round(2) if total_customers else 0 }}
+                </div>
+                <div class="report-insight-detail">Inventory-to-customer ratio</div>
+            </div>
+
+            <div class="report-insight">
+                <div class="report-insight-label">Pending conversations</div>
+                <div class="report-insight-value">
+                    {{ total_conversations - completed_conversations }}
+                </div>
+                <div class="report-insight-detail">
+                    Conversations not marked as completed
+                </div>
+            </div>
+
+            <div class="report-insight">
+                <div class="report-insight-label">New Customers This Month</div>
+                <div class="report-insight-value">{{ new_customers_this_month }}</div>
+                <div class="report-insight-detail">
+                    Registrations since the beginning of this month
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-footer">
+        <i class="bi bi-database-check"></i>
+        Generated from your current CRM database. Figures are scoped to your account.
+    </div>
+
+</div>
+{% endblock %}
