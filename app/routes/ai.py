@@ -53,7 +53,7 @@ from app.models import (
 from app.models import Property
 
 # ==========================================================
-# GEMINI LIVE CLIENT
+# GEMINI LIVE CLIENT 
 # ==========================================================
 
 GEMINI_API_KEY = os.getenv(
