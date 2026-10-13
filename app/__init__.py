@@ -45,7 +45,9 @@ def create_app():
     from app.routes.profile import profile_bp
     from app.routes.public_business import public_site_bp
     from app.routes.reports import reports_bp
-
+    from app.routes.call_history import call_history_bp
+    from app.routes.settings import settings_bp
+    
     app.register_blueprint(property_bp)
 
    
@@ -59,7 +61,9 @@ def create_app():
     app.register_blueprint(profile_bp)
     app.register_blueprint(public_site_bp)
     app.register_blueprint(reports_bp)
-    
+    app.register_blueprint(call_history_bp)
+    app.register_blueprint(settings_bp)
+
     print("Registered auth blueprint")
 
     # Register Blueprints here (we'll add them next)

@@ -50,7 +50,7 @@ from app.models import (
     Conversation,
     ConversationMessage
 )
-
+from app.models import Property
 
 # ==========================================================
 # GEMINI LIVE CLIENT
@@ -132,6 +132,7 @@ def deepgram_token():
             "success": False,
             "message": "Could not create Deepgram token."
         }), 500
+
 # ==========================================================
 # GEMINI LIVE TEMPORARY TOKEN
 # ==========================================================
@@ -140,46 +141,38 @@ def deepgram_token():
     "/api/gemini-live-token",
     methods=["GET"]
 )
+@login_required
 def gemini_live_token():
 
-    business_id = request.args.get(
-        "business_id"
-    )
+    business_id = request.args.get("business_id")
 
     if not business_id:
-
         return jsonify({
             "success": False,
             "message": "Business information is missing."
         }), 400
 
     try:
-
-        business_id = int(
-            business_id
-        )
-
+        business_id = int(business_id)
     except (TypeError, ValueError):
-
         return jsonify({
             "success": False,
             "message": "Invalid business information."
         }), 400
 
-    business = BusinessInformation.query.get(
-        business_id
-    )
+    # Only allow access to the logged-in user's business.
+    business = BusinessInformation.query.filter_by(
+        id=business_id,
+        user_id=current_user.id
+    ).first()
 
     if not business:
-
         return jsonify({
             "success": False,
             "message": "Business not found."
         }), 404
 
- 
     try:
-
         now = datetime.datetime.now(
             datetime.timezone.utc
         )
@@ -188,39 +181,54 @@ def gemini_live_token():
             config={
                 "uses": 1,
                 "expire_time": (
-                    now
-                    + datetime.timedelta(
-                        minutes=30
-                    )
+                    now + datetime.timedelta(minutes=30)
                 ),
                 "new_session_expire_time": (
-                    now
-                    + datetime.timedelta(
-                        minutes=1
-                    )
+                    now + datetime.timedelta(minutes=1)
                 ),
-                
             }
         )
 
         return jsonify({
             "success": True,
-        "token": token.name,
-            "business_id": business_id
-    })
+            "token": token.name,
+            "business_id": business.id,
+
+            # Business identity
+            "business_name": (
+                business.business_name or ""
+            ).strip(),
+
+            # AI assistant configuration
+            "greeting_message": (
+                business.greeting_message or ""
+            ).strip(),
+
+            "assistant_introduction": (
+                business.assistant_introduction or ""
+            ).strip(),
+
+            "voice_name": (
+                business.voice_name or "Kore"
+            ).strip(),
+
+            "response_style": (
+                business.response_style or "friendly"
+            ),
+
+            "preferred_language": (
+                business.preferred_language or "auto"
+            ),
+        })
 
     except Exception as e:
-        print(
-            "Gemini Live token error:",
-            e
-        )
+        print("Gemini Live token error:", e)
 
         return jsonify({
             "success": False,
-            "message": (
-                "Could not create Gemini Live token."
-            )
+            "message": "Could not create Gemini Live token."
         }), 500
+
 
 # ==========================================================
 # GEMINI CHAT
@@ -2270,7 +2278,7 @@ def gemini_live_search_properties():
                 "message": "Business not found."
             }), 404
 
-  
+        
 
         properties = get_matching_properties(
             user_id=business.user_id,
@@ -2280,6 +2288,7 @@ def gemini_live_search_properties():
             bedrooms=bedrooms,
             excluded_property_ids=excluded_property_ids
         )
+        
 
         results = []
 

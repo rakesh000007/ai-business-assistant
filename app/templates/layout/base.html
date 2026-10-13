@@ -72,20 +72,27 @@
         <span>AI Assistant</span>
     </a>
 
-    <a href="#">
-        <i class="bi bi-telephone-fill"></i>
-        <span>Call History</span>
-    </a>
 
-    <a href="#">
-        <i class="bi bi-bar-chart-fill"></i>
-        <span>Reports</span>
-    </a>
+<a href="{{ url_for('call_history.index') }}"
+   class="nav-item {% if request.blueprint == 'call_history' %}active{% endif %}">
+    <i class="bi bi-telephone-fill"></i>
+    <span>Call History</span>
+</a>
 
-    <a href="#">
-        <i class="bi bi-gear-fill"></i>
-        <span>Settings</span>
-    </a>
+<a href="{{ url_for('reports.report_home') }}"
+   class="nav-item {% if request.blueprint == 'reports' %}active{% endif %}">
+    <i class="bi bi-bar-chart-fill"></i>
+    <span>Reports</span>
+</a>
+
+
+    
+<a href="{{ url_for('settings.index') }}"
+   class="nav-item {% if request.blueprint == 'settings' %}active{% endif %}">
+    <i class="bi bi-gear-fill"></i>
+    <span>Settings</span>
+</a>
+
 
  
 
@@ -160,11 +167,29 @@
           </span>
           <i class="bi bi-chevron-down"></i>
         </button>
-        <div class="dropdown-panel" id="profilePanel">
-          <a href="/profile/" class="dropdown-item"><i class="bi bi-person"></i> My Profile</a>
-          <div class="dropdown-item"><i class="bi bi-gear"></i> Account Settings</div>
-          <a href="{{ url_for('auth.logout') }}" class="dropdown-item"><i class="bi bi-box-arrow-right"></i> Sign out</a>
-        </div>
+        
+<div class="dropdown-panel" id="profilePanel">
+    <a href="/profile/" class="dropdown-item">
+        <i class="bi bi-person"></i>
+        My Profile
+    </a>
+
+    <a href="{{ url_for('settings.index') }}" class="dropdown-item">
+        <i class="bi bi-gear"></i>
+        Account Settings
+    </a>
+
+    <a href="{{ url_for('settings.index') }}" class="dropdown-item">
+        <i class="bi bi-sliders"></i>
+        AI Assistant Settings
+    </a>
+
+    <a href="{{ url_for('auth.logout') }}" class="dropdown-item">
+        <i class="bi bi-box-arrow-right"></i>
+        Sign out
+    </a>
+</div>
+
       </div>
         </div>
     {% endif %}

@@ -1,92 +1,98 @@
+
 from app import db
 
 
 class BusinessInformation(db.Model):
     __tablename__ = "business_information"
 
-    # ==========================
     # Business Information ID
-    # ==========================
     id = db.Column(
         db.Integer,
         primary_key=True
     )
 
-    # ==========================
-    # OWNER / USER
-    # ==========================
-    #
-    # Each business information
-    # record belongs to one user.
-    #
+    # Owner / User
     user_id = db.Column(
         db.Integer,
         db.ForeignKey("users.id"),
         nullable=False
     )
 
-    # Relationship to User
     user = db.relationship(
         "User",
         backref="business_information",
         lazy=True
     )
 
-    # ==========================
-    # Business Name
-    # ==========================
+    # Business Profile
     business_name = db.Column(
         db.String(150),
         nullable=False
     )
 
-    # ==========================
-    # Owner Name
-    # ==========================
     owner_name = db.Column(
         db.String(100),
         nullable=False
     )
 
-    # ==========================
-    # Business Email
-    # ==========================
     email = db.Column(
         db.String(120)
     )
 
-    # ==========================
-    # Business Phone
-    # ==========================
     phone = db.Column(
         db.String(20)
     )
 
-    # ==========================
-    # Business Address
-    # ==========================
     address = db.Column(
         db.Text
     )
 
-    # ==========================
-    # Business Type
-    # ==========================
     business_type = db.Column(
         db.String(100)
     )
 
-    # ==========================
-    # Business Description
-    # ==========================
     description = db.Column(
         db.Text
     )
 
-    # ==========================
     # Created Date
-    # ==========================
     created_at = db.Column(
         db.DateTime,
         server_default=db.func.now()
+    )
+
+    # AI Assistant Greeting
+    greeting_message = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    # AI Assistant Introduction
+    assistant_introduction = db.Column(
+        db.Text,
+        nullable=True
+    )
+
+    # AI Assistant Response Style
+    response_style = db.Column(
+        db.String(20),
+        nullable=False,
+        default="friendly",
+        server_default="friendly"
+    )
+
+    # AI Assistant Preferred Language
+    preferred_language = db.Column(
+        db.String(10),
+        nullable=False,
+        default="auto",
+        server_default="auto"
+    )
+
+    # Gemini Live Voice Selection
+    voice_name = db.Column(
+        db.String(40),
+        nullable=False,
+        default="Kore",
+        server_default="Kore"
     )

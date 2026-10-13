@@ -1,0 +1,774 @@
+ {% extends "layout/base.html" %}
+
+{% block title %}Call History{% endblock %}
+{% block page_title %}Call History{% endblock %}
+
+{% block content %}
+
+<style>
+    .history-page {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+        color: #eeeefa;
+    }
+
+    /* KPI cards */
+    .history-stats {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .history-stat {
+        position: relative;
+        overflow: hidden;
+        padding: 22px;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 16px;
+        background: linear-gradient(
+            135deg,
+            rgba(112,85,238,.13),
+            rgba(255,255,255,.025)
+        );
+        box-shadow: 0 8px 24px rgba(0,0,0,.08);
+        transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .history-stat:hover {
+        transform: translateY(-3px);
+        border-color: rgba(145,120,255,.35);
+    }
+
+    .history-stat-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #a4a5c2;
+        font-size: 13px;
+    }
+
+    .history-stat-label i {
+        color: #b5a5ff;
+        font-size: 16px;
+    }
+
+    .history-stat-number {
+        display: block;
+        margin-top: 12px;
+        font-size: 32px;
+        line-height: 1.2;
+        font-weight: 700;
+        letter-spacing: -.5px;
+        color: #fff;
+    }
+
+    .history-stat-note {
+        margin-top: 8px;
+        color: #999bb8;
+        font-size: 12px;
+    }
+
+    /* Main panel */
+    .history-panel {
+        padding: 24px;
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 18px;
+        background: rgba(255,255,255,.035);
+        box-shadow: 0 12px 30px rgba(0,0,0,.08);
+    }
+
+    .history-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 18px;
+        margin-bottom: 22px;
+    }
+
+    .history-heading h3 {
+        margin: 0 0 7px;
+        color: #fff;
+        font-size: 21px;
+        font-weight: 650;
+    }
+
+    .history-heading p {
+        margin: 0;
+        color: #a4a5c2;
+        font-size: 13px;
+        line-height: 1.6;
+    }
+
+    .history-toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .history-search {
+        display: flex;
+        flex: 1 1 260px;
+        min-width: 240px;
+        max-width: 420px;
+        gap: 8px;
+    }
+
+    .history-control {
+        min-height: 42px;
+        padding: 10px 12px;
+        color: #eeeefa;
+        background: #17172b;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 10px;
+        outline: none;
+        font-size: 13px;
+    }
+
+    .history-control:focus {
+        border-color: #8e79ff;
+        box-shadow: 0 0 0 3px rgba(112,85,238,.15);
+    }
+
+    .history-control::placeholder {
+        color: #8587a7;
+    }
+
+    .history-control option {
+        color: #fff;
+        background: #17172b;
+    }
+
+    .history-search input {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .history-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 10px 15px;
+        color: #fff;
+        background: #7055ee;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .2s ease, transform .2s ease;
+    }
+
+    .history-btn:hover {
+        color: #fff;
+        background: #8068f5;
+        transform: translateY(-1px);
+    }
+
+    .history-btn-secondary {
+        color: #d8d2ff;
+        background: rgba(112,85,238,.1);
+        border-color: rgba(145,120,255,.22);
+    }
+
+    .history-btn-secondary:hover {
+        background: rgba(112,85,238,.2);
+    }
+
+    .history-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: end;
+        gap: 12px;
+        padding: 16px;
+        margin-bottom: 20px;
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 12px;
+        background: rgba(0,0,0,.09);
+    }
+
+    .history-filter-field {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        min-width: 145px;
+    }
+
+    .history-filter-field label {
+        color: #a4a5c2;
+        font-size: 12px;
+    }
+
+    .history-filter-field .history-control {
+        width: 100%;
+    }
+
+    /* Results summary */
+    .history-results-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 12px;
+        color: #a4a5c2;
+        font-size: 12px;
+    }
+
+    .history-results-bar strong {
+        color: #eeeefa;
+    }
+
+    /* Table */
+    .history-table-wrap {
+        overflow-x: auto;
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 12px;
+    }
+
+    .history-table {
+        width: 100%;
+        min-width: 790px;
+        border-collapse: collapse;
+    }
+
+    .history-table thead {
+        background: rgba(255,255,255,.025);
+    }
+
+    .history-table th {
+        padding: 15px 16px;
+        color: #9d9fbd;
+        text-align: left;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .45px;
+        text-transform: uppercase;
+        white-space: nowrap;
+        border-bottom: 1px solid rgba(255,255,255,.1);
+    }
+
+    .history-table td {
+        padding: 17px 16px;
+        color: #e7e7f5;
+        font-size: 13px;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(255,255,255,.055);
+    }
+
+    .history-table tbody tr {
+        transition: background .18s ease;
+    }
+
+    .history-table tbody tr:hover {
+        background: rgba(145,120,255,.045);
+    }
+
+    .history-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .history-customer {
+        color: #fff;
+        font-weight: 650;
+        font-size: 13px;
+    }
+
+    .history-muted {
+        margin-top: 5px;
+        color: #999bb8;
+        font-size: 12px;
+        line-height: 1.5;
+    }
+
+    .history-message-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        padding: 6px 9px;
+        color: #d5ccff;
+        background: rgba(112,85,238,.13);
+        border: 1px solid rgba(145,120,255,.14);
+        border-radius: 8px;
+        font-weight: 650;
+    }
+
+    .history-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 650;
+        white-space: nowrap;
+    }
+
+    .history-status::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .history-status.completed {
+        color: #7ee5b5;
+        background: rgba(46,204,113,.12);
+    }
+
+    .history-status.active {
+        color: #f5cf7a;
+        background: rgba(241,196,15,.12);
+    }
+
+    .history-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        white-space: nowrap;
+    }
+
+
+.history-view {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 9px 15px;
+    color: #d5ccff;
+    background: rgba(112, 85, 238, 0.12);
+    border: 1px solid rgba(145, 121, 255, 0.25);
+    border-radius: 9px;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.history-view:hover {
+    color: #fff;
+    background: #7055ee;
+    border-color: #7055ee;
+    transform: translateY(-1px);
+}
+
+
+    .history-empty {
+        text-align: center;
+        padding: 55px 18px;
+        color: #a4a5c2;
+    }
+
+    .history-empty-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 64px;
+        height: 64px;
+        margin-bottom: 14px;
+        color: #b5a5ff;
+        background: rgba(112,85,238,.13);
+        border: 1px solid rgba(145,120,255,.16);
+        border-radius: 18px;
+        font-size: 27px;
+    }
+
+    .history-empty h4 {
+        margin: 0 0 8px;
+        color: #fff;
+        font-size: 17px;
+    }
+
+    .history-empty p {
+        margin: 0;
+        font-size: 13px;
+    }
+
+    /* Pagination - requires backend pagination variables */
+    .history-pagination {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding-top: 18px;
+        margin-top: 16px;
+        border-top: 1px solid rgba(255,255,255,.07);
+    }
+
+    .history-pagination-info {
+        color: #999bb8;
+        font-size: 12px;
+    }
+
+    .history-pagination-links {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+
+    .history-page-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 36px;
+        min-height: 36px;
+        padding: 8px 11px;
+        color: #c8c2e8;
+        text-decoration: none;
+        background: rgba(255,255,255,.035);
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 9px;
+        font-size: 12px;
+    }
+
+    .history-page-link:hover,
+    .history-page-link.current {
+        color: #fff;
+        background: #7055ee;
+        border-color: #7055ee;
+    }
+
+    .history-page-link.disabled {
+        opacity: .4;
+        pointer-events: none;
+    }
+
+    @media (max-width: 1200px) {
+        .history-stats {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 700px) {
+        .history-stats {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .history-panel {
+            padding: 16px;
+        }
+
+        .history-toolbar {
+            flex-direction: column;
+        }
+
+        .history-toolbar-actions,
+        .history-search {
+            width: 100%;
+            max-width: none;
+        }
+
+        .history-filters {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .history-filter-field {
+            min-width: 0;
+        }
+
+        .history-pagination {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+</style>
+
+<div class="history-page">
+
+    <!-- Conversation KPI cards -->
+    <section class="history-stats">
+
+        <div class="history-stat">
+            <div class="history-stat-label">
+                <i class="bi bi-telephone"></i>
+                Total Conversations
+            </div>
+            <span class="history-stat-number">
+                {{ total_conversations | default(0) }}
+            </span>
+            <div class="history-stat-note">
+                All recorded conversations
+            </div>
+        </div>
+
+        <div class="history-stat">
+            <div class="history-stat-label">
+                <i class="bi bi-check-circle"></i>
+                Completed
+            </div>
+            <span class="history-stat-number">
+                {{ completed_conversations | default(0) }}
+            </span>
+            <div class="history-stat-note">
+                Successfully completed sessions
+            </div>
+        </div>
+
+        <div class="history-stat">
+            <div class="history-stat-label">
+                <i class="bi bi-activity"></i>
+                Active
+            </div>
+            <span class="history-stat-number">
+                {{ active_conversations | default(0) }}
+            </span>
+            <div class="history-stat-note">
+                Conversations in progress
+            </div>
+        </div>
+
+        <div class="history-stat">
+          <div class="history-stat-label">
+            <i class="bi bi-graph-up-arrow"></i>
+            Completion Rate
+          </div>
+
+          <span class="history-stat-number">
+            {{ "%.1f"|format(completion_rate | default(0)) }}%
+          </span>
+
+          <div class="history-stat-note">
+            Completed out of all conversations
+          </div>
+        </div>
+
+    </section>
+
+    <!-- Conversation history panel -->
+    <section class="history-panel">
+
+        <div class="history-toolbar">
+            <div class="history-heading">
+                <h3>
+                    <i class="bi bi-clock-history"></i>
+                    Conversation History
+                </h3>
+                <p>
+                    Search, filter, and review saved customer conversations.
+                </p>
+            </div>
+
+            <div class="history-toolbar-actions">
+                <a href="{{ url_for('call_history.index') }}"
+                   class="history-btn history-btn-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Reset
+                </a>
+            </div>
+        </div>
+
+        <!-- Search -->
+        <form method="GET"
+              action="{{ url_for('call_history.index') }}"
+              class="history-filters">
+
+            <div class="history-filter-field" style="flex: 2;">
+                <label for="history-search">Customer name or phone</label>
+                <input id="history-search"
+                       class="history-control"
+                       type="search"
+                       name="search"
+                       placeholder="Search customer..."
+                       value="{{ search | default('') }}">
+            </div>
+
+            <div class="history-filter-field">
+                <label for="history-status">Conversation status</label>
+                <select id="history-status"
+                        class="history-control"
+                        name="status">
+                    <option value="">All statuses</option>
+                    <option value="Completed"
+                        {% if selected_status == 'Completed' %}selected{% endif %}>
+                        Completed
+                    </option>
+                    <option value="Active"
+                        {% if selected_status == 'Active' %}selected{% endif %}>
+                        Active
+                    </option>
+                </select>
+            </div>
+
+            <div class="history-filter-field">
+                <label for="history-start-date">From date</label>
+                <input id="history-start-date"
+                       class="history-control"
+                       type="date"
+                       name="start_date"
+                       value="{{ start_date | default('') }}">
+            </div>
+
+            <div class="history-filter-field">
+                <label for="history-end-date">To date</label>
+                <input id="history-end-date"
+                       class="history-control"
+                       type="date"
+                       name="end_date"
+                       value="{{ end_date | default('') }}">
+            </div>
+
+            <button type="submit" class="history-btn">
+                <i class="bi bi-search"></i>
+                Apply Filters
+            </button>
+            
+            
+
+        </form>
+
+        <!-- Results -->
+        <div class="history-results-bar">
+            <span>
+                
+                Showing <strong>{{ conversations | length }}</strong>
+                of <strong>{{ filtered_conversations }}</strong>
+                matching conversation(s)
+
+            </span>
+            <span>
+                <i class="bi bi-shield-check"></i>
+                Your business conversations
+            </span>
+        </div>
+
+        <div class="history-table-wrap">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Customer</th>
+                        <th>Date &amp; Time</th>
+                        <th>Messages</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for conversation in conversations %}
+                    <tr>
+                        <td>
+                            <div class="history-customer">
+                                {{ conversation.customer.full_name }}
+                            </div>
+                            <div class="history-muted">
+                                Conversation #{{ conversation.id }}
+                            </div>
+                        </td>
+
+                        <td>
+                            {% if conversation.started_at %}
+                                {{ conversation.started_at.strftime('%d %b %Y') }}
+                                <div class="history-muted">
+                                    {{ conversation.started_at.strftime('%I:%M %p') }}
+                                </div>
+                            {% else %}
+                                —
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <span class="history-message-count">
+                                {{ conversation.messages | length }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <span class="history-status {{ conversation.status | lower }}">
+                                {{ conversation.status }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="history-actions">
+                                
+                                 <a class="history-view"
+                                    href="{{ url_for('call_history.transcript', conversation_id=conversation.id) }}">
+                                    <i class="bi bi-eye"></i>
+                                    View Transcript
+                                   <i class="bi bi-arrow-up-right"></i>
+                                </a>
+
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5">
+                            <div class="history-empty">
+                                <div class="history-empty-icon">
+                                    <i class="bi bi-chat-square-text"></i>
+                                </div>
+                                <h4>No conversations found</h4>
+                                <p>
+                                    Try changing your search or filters.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination: render when the backend supplies a pagination object -->
+        {% if pagination is defined and pagination.pages > 1 %}
+        <div class="history-pagination">
+            <div class="history-pagination-info">
+                Page {{ pagination.page }} of {{ pagination.pages }}
+            </div>
+
+            <div class="history-pagination-links">
+                <a class="history-page-link {% if not pagination.has_prev %}disabled{% endif %}"
+                   href="{{ url_for('call_history.index',
+                                    page=pagination.prev_num,
+                                    search=search,
+                                    status=selected_status,
+                                    start_date=start_date,
+                                    end_date=end_date) if pagination.has_prev else '#' }}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        <a class="history-page-link {% if page_num == pagination.page %}current{% endif %}"
+                           href="{{ url_for('call_history.index',
+                                            page=page_num,
+                                            search=search,
+                                            status=selected_status,
+                                            start_date=start_date,
+                                            end_date=end_date) }}">
+                            {{ page_num }}
+                        </a>
+                    {% else %}
+                        <span class="history-page-link disabled">…</span>
+                    {% endif %}
+                {% endfor %}
+
+                <a class="history-page-link {% if not pagination.has_next %}disabled{% endif %}"
+                   href="{{ url_for('call_history.index',
+                                    page=pagination.next_num,
+                                    search=search,
+                                    status=selected_status,
+                                    start_date=start_date,
+                                    end_date=end_date) if pagination.has_next else '#' }}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+    </section>
+
+</div>
+
+{% endblock %}

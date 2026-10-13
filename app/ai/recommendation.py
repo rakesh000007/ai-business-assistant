@@ -4,7 +4,7 @@ Property Recommendation
 Finds properties belonging to the logged-in business
 that match a customer's requirements.
 """
-
+from app import db
 from app.models import Property
 
 
@@ -56,14 +56,18 @@ def get_matching_properties(
           ~Property.property_id.in_(excluded_property_ids)
     )
 
+
     # ======================================================
     # Property Type
     # ======================================================
 
     if property_type:
         query = query.filter(
-            Property.property_type == property_type
+            Property.property_type.ilike(
+                property_type.strip()
+            )
         )
+
 
     # ======================================================
     # City
@@ -71,8 +75,11 @@ def get_matching_properties(
 
     if city:
         query = query.filter(
-            Property.city == city
+            db.func.trim(Property.city).ilike(
+                city.strip()
+            )
         )
+
 
     # ======================================================
     # Maximum Budget

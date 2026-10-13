@@ -658,10 +658,24 @@ async function testGeminiLiveConnection() {
 
         const tokenData =
             await tokenResponse.json();
+        
+        console.log(
+          "SAVED GREETING RECEIVED FROM BACKEND:",
+           tokenData.greeting_message
+        );
 
         console.log(
             "GEMINI TOKEN RESPONSE:",
             tokenData
+        );
+        console.log(
+          "SAVED RESPONSE STYLE:",
+           tokenData.response_style
+        );
+
+        console.log(
+          "SAVED PREFERRED LANGUAGE:",
+          tokenData.preferred_language
         );
 
         if (
@@ -675,12 +689,19 @@ async function testGeminiLiveConnection() {
             );
         }
 
-        const token =
-            tokenData.token;
+        const token = tokenData.token;
 
-        console.log(
-            "GEMINI LIVE TOKEN RECEIVED"
-        );
+        const geminiGreetingMessage =
+            (tokenData.greeting_message || "").trim();
+
+        const geminiBusinessName =
+            (tokenData.business_name || "").trim();
+
+        const geminiAssistantIntroduction =
+            (tokenData.assistant_introduction || "").trim();
+
+        const geminiVoiceName =
+            (tokenData.voice_name || "Kore").trim();
 
 
         // --------------------------------------------------
@@ -730,11 +751,16 @@ async function testGeminiLiveConnection() {
 
 
                         generationConfig: {
-
                             responseModalities: [
                                 "AUDIO"
-                            ]
-
+                            ],
+                            speechConfig: {
+                                voiceConfig: {
+                                    prebuiltVoiceConfig: {
+                                        voiceName: geminiVoiceName
+                                    }
+                                }
+                            }
                         },
 
 
@@ -1098,25 +1124,62 @@ async function testGeminiLiveConnection() {
 
                                     text:
 
-                                        "You are an AI voice assistant " +
-                                        "for the real-estate business. " +
 
+                                       "You are an AI voice assistant " +
+                                       "for the real-estate business. " +
+
+                                       "The business you represent is: " +
+                                       (geminiBusinessName || "the real-estate business") +
+                                       ". " +
+
+                                        (
+                                          geminiAssistantIntroduction
+                                           ? "Your configured introduction is: " +
+                                          geminiAssistantIntroduction +
+                                          ". Use it naturally when relevant, without " +
+                                          "repeating it unnecessarily. "
+                                        : ""
+                                        ) +
+
+                                        "Use the initial greeting provided after connection setup. " +
+                                        "Speak that greeting once, exactly as provided, without " +
+                                        "adding another introduction or repeating the greeting. " +
+                                        "After the greeting, continue the conversation naturally " +
+                                        "and follow all other instructions. " +
+
+
+                                        
                                         // ------------------------------------------
                                         // LANGUAGE AND CONVERSATION
                                         // ------------------------------------------
 
                                         "You are a multilingual voice assistant. " +
-                                        "Automatically identify and understand the " +
-                                        "language spoken by the customer. Respond " +
-                                        "naturally in the same language. Support " +
-                                        "language switching and mixed-language speech " +
-                                        "whenever supported by the active Gemini Live " +
-                                        "model. Do not force the customer to speak " +
-                                        "English. Preserve property titles, prices, " +
-                                        "locations, names, phone numbers, and database " +
-                                        "values accurately. " +
 
-                                        "Speak naturally, politely, and concisely. " +
+                                        // Response style preference
+                                        "Use a " +
+                                        (
+                                            tokenData.response_style === "professional"
+                                                ? "professional and formal"
+                                                : tokenData.response_style === "concise"
+                                                    ? "concise and direct"
+                                                    : "friendly and conversational"
+                                        ) +
+                                        " communication style. " +
+
+                                        // Preferred language preference
+                                        (
+                                            tokenData.preferred_language === "en"
+                                                ? "Always respond in English. "
+                                                : tokenData.preferred_language === "te"
+                                                    ? "Always respond in Telugu. "
+                                                    : tokenData.preferred_language === "hi"
+                                                        ? "Always respond in Hindi. "
+                                                        : "Automatically identify and understand the customer's language. Respond naturally in the same language. Support language switching and mixed-language speech whenever supported by the active Gemini Live model. Do not force the customer to speak English. "
+                                        ) +
+
+                                        "Preserve property titles, prices, locations, names, phone numbers, and database values accurately. " +
+
+                                        "Keep responses clear and polite while following the selected communication style. " +
                                         "Use previous conversation context and reuse " +
                                         "information already provided. Ask only for " +
                                         "missing information. Do not repeatedly ask " +
@@ -1182,12 +1245,16 @@ async function testGeminiLiveConnection() {
                                         "both are available, call save_customer. Do " +
                                         "not wait for an email address before saving. " +
 
-                                        "Email is optional. You may politely ask for " +
-                                        "the customer's email address. If provided, " +
-                                        "pass it to save_customer. If the customer " +
-                                        "declines, wants to skip it, or has no email, " +
-                                        "accept that immediately and do not ask again. " +
-                                        "Never invent an email address. " +
+                                        "Email is optional, but you MUST politely ask for " +
+                                        "the customer's email address once after collecting " +
+                                        "their full name and phone number. Ask: 'May I have " +
+                                        "your email address? You can skip this if you prefer.' " +
+                                        "If the customer provides an email, pass it to " +
+                                        "save_customer. If the customer declines, skips the " +
+                                        "question, or says they do not have an email, continue " +
+                                        "without an email and do not ask again. Never invent " +
+                                        "an email address. Do not delay saving the customer " +
+                                        "while waiting for an optional email. " +
 
                                         "If the customer provides only their name " +
                                         "or only their phone number, ask for the " +
@@ -1460,29 +1527,23 @@ geminiSocket.onmessage =
                                     console.log(
                                         "GEMINI PROPERTY SEARCH REQUEST:",
                                         {
+                                            functionArguments:
+                                                functionCall.args,
+
                                             searchMode:
                                                 searchMode,
 
-                                            city:
-                                                searchMode === "next_property"
-                                                    ? lastPropertySearch.city
-                                                    : lastPropertySearch.city,
+                                            lastPropertySearch:
+                                                lastPropertySearch,
 
-                                            property_type:
-                                                lastPropertySearch.property_type,
-
-                                            bedrooms:
-                                                lastPropertySearch.bedrooms,
-
-                                            budget:
-                                                lastPropertySearch.budget,
+                                            currentPropertyId:
+                                                currentPropertyId,
 
                                             excluded_property_ids:
                                                 excludedPropertyIds
                                         }
                                     );
-
-
+                                    
                                     const searchResponse =
                                         await fetch(
                                             "/ai/api/gemini-live/search-properties",
@@ -1504,7 +1565,7 @@ geminiSocket.onmessage =
 
                                                     property_type:
                                                         searchMode === "next_property"
-                                                            ? lastPropertySearch.property_type
+                                                            ? null
                                                             : functionCall.args?.property_type,
 
                                                     bedrooms:
@@ -1953,24 +2014,55 @@ geminiSocket.onmessage =
                     if ( 
                         response.setupComplete 
                     ) { 
- 
+
                         console.log( 
                             "GEMINI LIVE SETUP COMPLETE" 
                         ); 
- 
+
                         geminiSetupComplete = 
                             true; 
- 
+
                         callTitle.textContent = 
                             "AI Voice Assistant";
 
                         callStatus.textContent = 
-                            "Starting microphone..."; 
- 
- 
+                            "Preparing your greeting..."; 
+
+                        
+                        // Request the AI's first spoken greeting.
+                        if (
+                            geminiSocket &&
+                            geminiSocket.readyState === WebSocket.OPEN
+                        ) {
+                            geminiSocket.send(
+                                JSON.stringify({
+                                    clientContent: {
+                                        turns: [
+                                            {
+                                                role: "user",
+                                                parts: [
+                                                    {
+                                                        text: geminiGreetingMessage
+                                                            ? "Speak this exact greeting to the customer once, without adding another introduction: " + geminiGreetingMessage
+                                                            : "Begin the conversation now. Greet the customer naturally as the AI assistant for this real-estate business, and ask how you can help with their property requirements. Follow your system instructions and do not invent the business name."
+                                                    }
+                                                ]
+                                            }
+                                        ],
+                                        turnComplete: true
+                                    }
+                                })
+                            );
+
+                            console.log(
+                                "INITIAL GREETING REQUEST SENT"
+                            );
+                        }
+
                         startGeminiMicrophone();
- 
+
                     }
+
                     // ------------------------------------------
                     // SERVER CONTENT
                     // ------------------------------------------

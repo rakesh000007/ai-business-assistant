@@ -1,0 +1,661 @@
+
+{% extends "layout/base.html" %}
+
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_sub %}Manage your AI Business Assistant preferences{% endblock %}
+
+{% block extra_css %}
+
+<style>
+/* =========================================
+   SETTINGS PAGE
+   ========================================= */
+
+.settings-page {
+    color: #f1efff;
+    padding: 24px;
+}
+
+.settings-header {
+    margin-bottom: 24px;
+}
+
+.settings-header h2 {
+    font-size: 23px;
+    font-weight: 700;
+    margin-bottom: 7px;
+}
+
+.settings-header p {
+    color: #a4a5c2;
+    margin: 0;
+    font-size: 13px;
+}
+
+/* One section after another; adapts to future sections */
+.settings-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+}
+
+/* Individual section cards */
+.settings-card {
+    min-width: 0;
+    height: auto;
+    padding: 26px;
+    border: 1px solid rgba(167, 139, 250, 0.18);
+    border-radius: 18px;
+    background: linear-gradient(
+        145deg,
+        rgba(35, 39, 72, 0.92),
+        rgba(24, 20, 48, 0.96)
+    );
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.settings-card:hover {
+    border-color: rgba(167, 139, 250, 0.30);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.16);
+}
+
+.settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding-bottom: 18px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.settings-icon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 13px;
+    background: rgba(112, 85, 238, 0.17);
+    color: #c7baff;
+    font-size: 21px;
+}
+
+.settings-card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 5px;
+}
+
+.settings-card-header p,
+.settings-description {
+    color: #a4a5c2;
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* Profile, CRM and reports rows */
+.settings-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.settings-option h4 {
+    font-size: 13px;
+    margin: 0 0 5px;
+    font-weight: 600;
+}
+
+.settings-option p {
+    color: #a4a5c2;
+    font-size: 12px;
+    margin: 0;
+    line-height: 1.6;
+}
+
+.settings-action {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 9px 13px;
+    border-radius: 9px;
+    color: #d5ccff;
+    background: rgba(112, 85, 238, 0.12);
+    border: 1px solid rgba(145, 121, 255, 0.25);
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    transition: background 0.2s, color 0.2s;
+}
+
+.settings-action:hover {
+    color: #fff;
+    background: #7055ee;
+}
+
+.settings-tag {
+    font-size: 11px;
+    padding: 5px 9px;
+    border-radius: 20px;
+    color: #c8baff;
+    background: rgba(112, 85, 238, 0.15);
+    white-space: nowrap;
+}
+
+.settings-footer {
+    margin-top: 22px;
+    color: #8e90ad;
+    font-size: 12px;
+}
+
+/* =========================================
+   AI ASSISTANT CONFIGURATION
+   ========================================= */
+
+.greeting-form {
+    min-width: 0;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.greeting-form label {
+    display: block;
+    margin-bottom: 9px;
+    color: #eeebff;
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.greeting-form textarea {
+    display: block;
+    width: 100%;
+    min-height: 105px;
+    padding: 14px 15px;
+    resize: vertical;
+    color: #f1efff;
+    background: #15162b;
+    border: 1px solid rgba(167, 139, 250, 0.20);
+    border-radius: 12px;
+    font: inherit;
+    line-height: 1.6;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.greeting-form textarea::placeholder {
+    color: #8586a5;
+    opacity: 1;
+}
+
+.greeting-form textarea:focus {
+    color: #ffffff;
+    background: #15162b;
+    border-color: #8b75f5;
+    box-shadow: 0 0 0 3px rgba(139, 117, 245, 0.16);
+    outline: none;
+}
+
+/* Dark dropdowns */
+.greeting-form select,
+.greeting-form .form-select {
+    display: block;
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 42px 10px 14px;
+    color: #f1efff;
+    background-color: #15162b;
+    border: 1px solid rgba(167, 139, 250, 0.24);
+    border-radius: 11px;
+    font: inherit;
+    color-scheme: dark;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.greeting-form select:focus,
+.greeting-form .form-select:focus {
+    color: #ffffff;
+    background-color: #15162b;
+    border-color: #8b75f5;
+    box-shadow: 0 0 0 3px rgba(139, 117, 245, 0.16);
+    outline: none;
+}
+
+.greeting-form select option {
+    color: #f1efff;
+    background-color: #1c1b35;
+}
+
+.greeting-form .settings-description {
+    margin: 8px 0 14px;
+    color: #a9aac6;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+/* =========================================
+   UNIFIED BUTTON THEME
+   ========================================= */
+
+.greeting-save,
+.settings-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 42px;
+    padding: 10px 16px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #8065f2, #6748df);
+    border: 1px solid rgba(190, 175, 255, 0.4);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 650;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.18s ease;
+}
+
+.greeting-save {
+    margin: 5px 8px 0 0;
+}
+
+.settings-action {
+    min-height: 36px;
+    padding: 9px 13px;
+}
+
+/* Same hover treatment for all buttons */
+.greeting-save:hover,
+.settings-action:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #927bff, #7557ed);
+    border-color: #b5a5ff;
+    box-shadow: 0 5px 16px rgba(112, 85, 238, 0.25);
+    transform: translateY(-1px);
+}
+
+/* Secondary button: same theme, darker shade */
+.ai-secondary-save {
+    color: #ffffff;
+    background: linear-gradient(135deg, #7055d9, #5140a8);
+    border: 1px solid #8b75f5;
+    box-shadow: 0 3px 10px rgba(112, 85, 238, 0.15);
+}
+
+.ai-secondary-save:hover {
+    color: #ffffff;
+    background: linear-gradient(135deg, #927bff, #7557ed);
+    border-color: #b5a5ff;
+}
+
+/* Consistent keyboard focus */
+.greeting-save:focus-visible,
+.settings-action:focus-visible {
+    outline: 2px solid #b9a8ff;
+    outline-offset: 3px;
+}
+
+/* Keep button margins controlled inside action groups */
+.ai-form-actions .greeting-save {
+    margin: 0;
+}
+
+
+
+.ai-preferences-section {
+    padding-top: 24px;
+    margin-top: 26px;
+    border-top: 1px solid rgba(167, 139, 250, 0.20);
+}
+
+.ai-preferences-section .ai-field {
+    margin-bottom: 20px;
+}
+
+.ai-preferences-section .ai-field:last-of-type {
+    margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+    .ai-subsection-heading {
+        align-items: flex-start;
+    }
+
+    .ai-form-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .ai-form-actions .greeting-save {
+        width: 100%;
+    }
+
+    .ai-conversation-option {
+        align-items: flex-start;
+    }
+}
+
+
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+
+    <div class="settings-header">
+        <h2>Application Settings</h2>
+        <p>Manage your account, business configuration, and assistant preferences.</p>
+    </div>
+
+    <div class="settings-grid">
+
+        <!-- Profile settings -->
+        <section class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-icon">
+                    <i class="bi bi-person-gear"></i>
+                </div>
+                <div>
+                    <h3>Profile & Account</h3>
+                    <p>Manage your personal and business information.</p>
+                </div>
+            </div>
+
+            <div class="settings-option">
+                <div>
+                    <h4>Profile Information</h4>
+                    <p>Update your name, contact details, and business information.</p>
+                </div>
+                <a href="{{ url_for('profile.profile') }}" class="settings-action">
+                    <i class="bi bi-arrow-up-right"></i> Open Profile
+                </a>
+            </div>
+
+            <div class="settings-option">
+                <div>
+                    <h4>Password & Security</h4>
+                    <p>Change your account password securely.</p>
+                </div>
+                <a href="{{ url_for('profile.profile') }}" class="settings-action">
+                    <i class="bi bi-shield-lock"></i> Manage
+                </a>
+            </div>
+        </section>
+
+
+<!-- AI assistant -->
+<section class="settings-card ai-settings-card">
+    <div class="settings-card-header">
+        <div class="settings-icon">
+            <i class="bi bi-robot"></i>
+        </div>
+        <div>
+            <h3>AI Assistant</h3>
+            <p>Customize your assistant's identity, voice, and conversation style.</p>
+        </div>
+    </div>
+
+    <!-- AI Conversation -->
+    <div class="settings-option ai-conversation-option">
+        <div>
+            <h4><i class="bi bi-chat-dots me-2"></i>AI Conversation</h4>
+            <p>Open the assistant to test customer conversations.</p>
+        </div>
+        <a href="{{ url_for('ai.dashboard') }}" class="settings-action">
+            <i class="bi bi-stars"></i> Open Assistant
+        </a>
+    </div>
+
+    <!-- Assistant Identity -->
+    <div class="greeting-form ai-identity-section">
+        <div class="ai-subsection-heading">
+            <span class="ai-section-icon">
+                <i class="bi bi-person-badge"></i>
+            </span>
+            <div>
+                <h4>Assistant Identity</h4>
+                <p>Configure the opening message and the role your assistant represents.</p>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ url_for('settings.index') }}">
+            <div class="ai-field">
+                <label for="greeting_message">AI Assistant Greeting</label>
+                <textarea
+                    id="greeting_message"
+                    name="greeting_message"
+                    maxlength="2000"
+                    placeholder="Hello! Welcome to our real estate business. How can I help you find your ideal property?"
+                >{{ (business.greeting_message or "Hello and welcome! I'm your virtual assistant. How can I help you with your property requirements?") if business else "Hello and welcome! I'm your virtual assistant. How can I help you with your property requirements?" }}</textarea>
+                <p class="settings-description">
+                    Customize the first message your assistant speaks to customers.
+                </p>
+            </div>
+
+            <div class="ai-field">
+                <label for="assistant_introduction">Assistant Introduction</label>
+                <textarea
+                    id="assistant_introduction"
+                    name="assistant_introduction"
+                    maxlength="2000"
+                    placeholder="Example: I am the virtual property consultant for ABC Realty. I can help you explore properties, compare budgets, and arrange site visits."
+                >{{ (business.assistant_introduction or '') if business else '' }}</textarea>
+                <p class="settings-description">
+                    Explain who the assistant represents and how it helps customers.
+                </p>
+            </div>
+
+            <div class="ai-field ai-voice-field">
+                <label for="voice_name">
+                    <i class="bi bi-soundwave me-1"></i> AI Voice
+                </label>
+                <select id="voice_name" name="voice_name" class="form-select">
+                    {% for voice_value, voice_label in supported_voices %}
+                        <option
+                            value="{{ voice_value }}"
+                            {% if business and business.voice_name == voice_value %}selected
+                            {% elif (not business or not business.voice_name) and voice_value == 'Kore' %}selected
+                            {% endif %}
+                        >{{ voice_label }}</option>
+                    {% endfor %}
+                </select>
+                <p class="settings-description">
+                    Choose from the six configured Gemini Live voices. Actual voice characteristics may vary.
+                </p>
+            </div>
+
+            <div class="ai-form-actions">
+                <button
+                    type="submit"
+                    name="action"
+                    value="save_settings"
+                    class="greeting-save"
+                >
+                    <i class="bi bi-check2-circle"></i>
+                    Save Assistant Settings
+                </button>
+
+                <button
+                    type="submit"
+                    name="action"
+                    value="test_greeting"
+                    class="greeting-save ai-secondary-save"
+                >
+                    <i class="bi bi-play-circle"></i>
+                    Save &amp; Open Assistant
+                </button>
+            </div>
+        </form>
+    </div>
+
+ 
+<!-- Conversation Preferences -->
+<div class="greeting-form ai-preferences-section">
+    <div class="ai-subsection-heading">
+        <span class="ai-section-icon">
+            <i class="bi bi-sliders"></i>
+        </span>
+        <div>
+            <h4>Conversation Preferences</h4>
+            <p>Control how the assistant communicates with customers.</p>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('settings.index') }}">
+        <!-- Response Style -->
+        <div class="ai-field">
+            <label for="response_style">Response Style</label>
+            <select
+                id="response_style"
+                name="response_style"
+                class="form-select"
+            >
+                <option value="friendly"
+                    {% if not business or business.response_style == 'friendly' %}selected{% endif %}>
+                    Friendly
+                </option>
+                <option value="professional"
+                    {% if business and business.response_style == 'professional' %}selected{% endif %}>
+                    Professional
+                </option>
+                <option value="concise"
+                    {% if business and business.response_style == 'concise' %}selected{% endif %}>
+                    Concise
+                </option>
+            </select>
+            <p class="settings-description">
+                Choose how the assistant communicates with customers.
+            </p>
+        </div>
+
+        <!-- Preferred Language -->
+        <div class="ai-field">
+            <label for="preferred_language">Preferred Language</label>
+            <select
+                id="preferred_language"
+                name="preferred_language"
+                class="form-select"
+            >
+                <option value="auto"
+                    {% if not business or business.preferred_language == 'auto' %}selected{% endif %}>
+                    Automatic — follow the customer's language
+                </option>
+                <option value="en"
+                    {% if business and business.preferred_language == 'en' %}selected{% endif %}>
+                    English
+                </option>
+                <option value="te"
+                    {% if business and business.preferred_language == 'te' %}selected{% endif %}>
+                    Telugu
+                </option>
+                <option value="hi"
+                    {% if business and business.preferred_language == 'hi' %}selected{% endif %}>
+                    Hindi
+                </option>
+            </select>
+            <p class="settings-description">
+                Choose a fixed language or let the assistant follow the customer's language.
+            </p>
+        </div>
+
+        <div class="ai-form-actions">
+            <button type="submit" class="greeting-save">
+                <i class="bi bi-check2-circle"></i>
+                Save Preferences
+            </button>
+        </div>
+    </form>
+</div>
+</section>
+
+
+        <!-- CRM settings -->
+        <section class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-icon">
+                    <i class="bi bi-sliders"></i>
+                </div>
+                <div>
+                    <h3>CRM Configuration</h3>
+                    <p>Quick access to your business management modules.</p>
+                </div>
+            </div>
+
+            <div class="settings-option">
+                <div>
+                    <h4>Customer Management</h4>
+                    <p>View and manage your customer records.</p>
+                </div>
+                <a href="{{ url_for('customer.customer_list') }}" class="settings-action">
+                    Open <i class="bi bi-arrow-up-right"></i>
+                </a>
+            </div>
+
+            <div class="settings-option">
+                <div>
+                    <h4>Property Inventory</h4>
+                    <p>Review your available property listings.</p>
+                </div>
+                <a href="{{ url_for('property.property_list') }}" class="settings-action">
+                    Open <i class="bi bi-arrow-up-right"></i>
+                </a>
+            </div>
+        </section>
+
+        <!-- Reports and history -->
+        <section class="settings-card">
+            <div class="settings-card-header">
+                <div class="settings-icon">
+                    <i class="bi bi-graph-up-arrow"></i>
+                </div>
+                <div>
+                    <h3>Reports & Activity</h3>
+                    <p>Review your business activity and conversations.</p>
+                </div>
+            </div>
+
+            <div class="settings-option">
+                <div>
+                    <h4>Business Reports</h4>
+                    <p>View analytics and generate business reports.</p>
+                </div>
+                <a href="{{ url_for('reports.report_home') }}" class="settings-action">
+                    Open <i class="bi bi-arrow-up-right"></i>
+                </a>
+            </div>
+
+            <div class="settings-option">
+                <div>
+                    <h4>Call History</h4>
+                    <p>Review saved conversations and transcripts.</p>
+                </div>
+                <a href="{{ url_for('call_history.index') }}" class="settings-action">
+                    Open <i class="bi bi-arrow-up-right"></i>
+                </a>
+            </div>
+        </section>
+
+    </div>
+
+    <div class="settings-footer">
+        AI Business Assistant · Settings
+    </div>
+
+</div>
+{% endblock %}

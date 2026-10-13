@@ -1,0 +1,457 @@
+
+{% extends "layout/base.html" %}
+
+{% block title %}Conversation Transcript{% endblock %}
+{% block page_title %}Conversation Transcript{% endblock %}
+
+{% block content %}
+
+<style>
+    .transcript-page {
+        max-width: 1400px;
+        margin: 0 auto;
+        color: #eeeefa;
+    }
+
+    .transcript-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-bottom: 22px;
+    }
+
+    .transcript-heading {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+    }
+
+    .transcript-avatar {
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 15px;
+        background: rgba(112, 85, 238, .18);
+        border: 1px solid rgba(145, 120, 255, .22);
+        color: #b7a6ff;
+        font-size: 21px;
+    }
+
+    .transcript-heading h2 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .transcript-subtitle {
+        margin-top: 6px;
+        color: #a4a5c2;
+        font-size: 13px;
+    }
+
+    .transcript-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 15px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,.1);
+        color: #eeeefa;
+        background: rgba(255,255,255,.045);
+        text-decoration: none;
+        font-size: 13px;
+        font-weight: 600;
+        transition: background .2s ease, border-color .2s ease;
+    }
+
+    .transcript-back:hover {
+        color: #fff;
+        background: rgba(112,85,238,.18);
+        border-color: rgba(145,120,255,.35);
+    }
+
+    .transcript-overview {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 22px;
+    }
+
+    .transcript-overview-card {
+        padding: 17px 19px;
+        border: 1px solid rgba(255,255,255,.075);
+        border-radius: 14px;
+        background: rgba(255,255,255,.035);
+    }
+
+    .transcript-overview-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #a4a5c2;
+        font-size: 12px;
+    }
+
+    .transcript-overview-value {
+        margin-top: 10px;
+        color: #fff;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    .transcript-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .transcript-status.completed {
+        color: #7ee5b5;
+        background: rgba(46,204,113,.12);
+    }
+
+    .transcript-status.active {
+        color: #f5cf7a;
+        background: rgba(241,196,15,.12);
+    }
+
+    .transcript-panel {
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 17px;
+        background: rgba(255,255,255,.025);
+    }
+
+    .transcript-panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 19px 22px;
+        border-bottom: 1px solid rgba(255,255,255,.08);
+        background: rgba(255,255,255,.025);
+    }
+
+    .transcript-panel-title {
+        color: #fff;
+        font-size: 15px;
+        font-weight: 700;
+    }
+
+    .transcript-panel-description {
+        margin-top: 5px;
+        color: #999bb8;
+        font-size: 12px;
+    }
+
+    .transcript-count {
+        padding: 7px 11px;
+        border: 1px solid rgba(145,120,255,.18);
+        border-radius: 9px;
+        color: #c4b6ff;
+        background: rgba(112,85,238,.1);
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    .transcript-chat {
+        display: flex;
+        flex-direction: column;
+        gap: 21px;
+        padding: 25px;
+    }
+
+    .transcript-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 11px;
+        width: 100%;
+    }
+
+    .transcript-row.ai {
+        flex-direction: row-reverse;
+    }
+
+    .transcript-speaker-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        border-radius: 11px;
+        color: #c4b6ff;
+        background: rgba(112,85,238,.17);
+        border: 1px solid rgba(145,120,255,.15);
+        font-size: 14px;
+    }
+
+    .transcript-row.customer .transcript-speaker-avatar {
+        color: #b8c5ff;
+        background: rgba(113,140,255,.12);
+        border-color: rgba(113,140,255,.15);
+    }
+
+    .transcript-message-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-width: 0;
+        max-width: min(76%, 720px);
+    }
+
+    .transcript-row.ai .transcript-message-wrap {
+        align-items: flex-end;
+    }
+
+    .transcript-speaker {
+        margin: 0 3px 7px;
+        color: #a4a5c2;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .transcript-bubble {
+        width: fit-content;
+        max-width: 100%;
+        box-sizing: border-box;
+        padding: 13px 16px;
+        border-radius: 4px 15px 15px 15px;
+        color: #e9e9f6;
+        background: rgba(255,255,255,.055);
+        border: 1px solid rgba(255,255,255,.075);
+        font-size: 13px;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .transcript-row.ai .transcript-bubble {
+        border-radius: 15px 4px 15px 15px;
+        color: #f0edff;
+        background: linear-gradient(
+            135deg,
+            rgba(112,85,238,.19),
+            rgba(112,85,238,.09)
+        );
+        border-color: rgba(145,120,255,.19);
+    }
+
+    .transcript-message-time {
+        margin: 7px 4px 0;
+        color: #777b9c;
+        font-size: 10px;
+    }
+
+    .transcript-row.ai .transcript-message-time {
+        text-align: right;
+    }
+
+    .transcript-empty {
+        padding: 50px 20px;
+        text-align: center;
+        color: #a4a5c2;
+    }
+
+    .transcript-empty i {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 30px;
+        color: #a995ff;
+    }
+
+    @media (max-width: 800px) {
+        .transcript-overview {
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .transcript-chat {
+            padding: 17px 12px;
+            gap: 18px;
+        }
+
+        .transcript-message-wrap {
+            max-width: 88%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .transcript-heading h2 {
+            font-size: 18px;
+        }
+
+        .transcript-avatar {
+            width: 44px;
+            height: 44px;
+        }
+
+        .transcript-panel-header {
+            padding: 16px;
+        }
+
+        .transcript-message-wrap {
+            max-width: calc(100% - 45px);
+        }
+
+        .transcript-bubble {
+            padding: 11px 13px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<div class="transcript-page">
+
+    <!-- Conversation heading -->
+    <div class="transcript-topbar">
+        <div class="transcript-heading">
+            <div class="transcript-avatar">
+                <i class="bi bi-chat-square-text"></i>
+            </div>
+
+            <div>
+                <h2>{{ conversation.customer.full_name }}</h2>
+
+                <div class="transcript-subtitle">
+                    Conversation #{{ conversation.id }}
+                    {% if conversation.started_at %}
+                        · {{ conversation.started_at.strftime('%d %b %Y, %I:%M %p') }}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('call_history.index') }}"
+           class="transcript-back">
+            <i class="bi bi-arrow-left"></i>
+            Back to Call History
+        </a>
+    </div>
+
+    <!-- Conversation overview -->
+    <div class="transcript-overview">
+
+        <div class="transcript-overview-card">
+            <div class="transcript-overview-label">
+                <i class="bi bi-chat-left-text"></i>
+                Total Messages
+            </div>
+            <div class="transcript-overview-value">
+                {{ messages | length }}
+            </div>
+        </div>
+
+        <div class="transcript-overview-card">
+            <div class="transcript-overview-label">
+                <i class="bi bi-calendar3"></i>
+                Started At
+            </div>
+            <div class="transcript-overview-value" style="font-size: 15px;">
+                {% if conversation.started_at %}
+                    {{ conversation.started_at.strftime('%d %b %Y') }}
+                    <div class="transcript-subtitle">
+                        {{ conversation.started_at.strftime('%I:%M %p') }}
+                    </div>
+                {% else %}
+                    —
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="transcript-overview-card">
+            <div class="transcript-overview-label">
+                <i class="bi bi-activity"></i>
+                Conversation Status
+            </div>
+            <div style="margin-top: 12px;">
+                <span class="transcript-status {{ conversation.status | lower }}">
+                    <i class="bi bi-circle-fill" style="font-size: 7px;"></i>
+                    {{ conversation.status }}
+                </span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Chat transcript -->
+    <div class="transcript-panel">
+
+        <div class="transcript-panel-header">
+            <div>
+                <div class="transcript-panel-title">
+                    <i class="bi bi-chat-dots"></i>
+                    Conversation Transcript
+                </div>
+                <div class="transcript-panel-description">
+                    Saved messages between the customer and AI assistant
+                </div>
+            </div>
+
+            <div class="transcript-count">
+                {{ messages | length }} messages
+            </div>
+        </div>
+
+        <div class="transcript-chat">
+
+            {% for message in messages %}
+
+            <div class="transcript-row {{ 'ai' if message.sender == 'AI' else 'customer' }}">
+
+                <div class="transcript-speaker-avatar">
+                    {% if message.sender == 'AI' %}
+                        <i class="bi bi-robot"></i>
+                    {% else %}
+                        <i class="bi bi-person-fill"></i>
+                    {% endif %}
+                </div>
+
+                <div class="transcript-message-wrap">
+
+                    <div class="transcript-speaker">
+                        {% if message.sender == 'AI' %}
+                            AI Assistant
+                        {% else %}
+                            {{ conversation.customer.full_name }}
+                        {% endif %}
+                    </div>
+
+                    <div class="transcript-bubble">{{ message.message }}</div>
+
+                    {% if message.created_at %}
+                    <div class="transcript-message-time">
+                        {{ message.created_at.strftime('%d %b %Y, %I:%M %p') }}
+                    </div>
+                    {% endif %}
+
+                </div>
+            </div>
+
+            {% else %}
+
+            <div class="transcript-empty">
+                <i class="bi bi-chat-square-text"></i>
+                <h4>No messages yet</h4>
+                <p>This conversation does not have any saved messages.</p>
+            </div>
+
+            {% endfor %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}
