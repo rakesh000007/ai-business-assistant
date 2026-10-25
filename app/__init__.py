@@ -72,11 +72,8 @@ def create_app():
 
     @app.route("/")
     def home():
-        return """
-        <h1>🤖 AI Business Assistant</h1>
-        <h2>Capstone Project</h2>
-        <p>Project Started Successfully!</p>
-        """
+      from flask import redirect, url_for
+      return redirect(url_for("auth.login"))
 
 
     @app.context_processor
