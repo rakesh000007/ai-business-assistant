@@ -6,7 +6,9 @@
 
 {% block content %}
 {% set chat_url = url_for('ai.chat', business_id=business.id) %}
-{% set call_url = url_for('ai.call', business_id=business.id) %}
+
+{% set call_url = url_for('ai.call', business_id=business.id, source='public') %}
+
 {% set img = property_image_url(property) %}
 
 <div class="detail container">

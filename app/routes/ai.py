@@ -51,7 +51,7 @@ from app.models import (
     ConversationMessage
 )
 from app.models import Property
-
+from app.models import CallSession
 # ==========================================================
 # GEMINI LIVE CLIENT 
 # ==========================================================
@@ -63,6 +63,7 @@ GEMINI_API_KEY = os.getenv(
 gemini_client = genai.Client(
     api_key=GEMINI_API_KEY
 )
+
 
 GEMINI_LIVE_MODEL = (
     "gemini-3.8-live"
@@ -224,6 +225,73 @@ def gemini_live_token():
     except Exception as e:
         print("Gemini Live token error:", e)
 
+        return jsonify({
+            "success": False,
+            "message": "Could not create Gemini Live token."
+        }), 500
+
+# ==========================================================
+# GEMINI LIVE PUBLIC TOKEN
+# ==========================================================
+
+@ai_bp.route("/api/gemini-live-public-token", methods=["GET"])
+def gemini_live_public_token():
+    """Issue a short-lived Gemini Live token for a public business call."""
+
+    business_id = request.args.get("business_id")
+
+    if not business_id:
+        return jsonify({
+            "success": False,
+            "message": "Business information is missing."
+        }), 400
+
+    try:
+        business_id = int(business_id)
+    except (TypeError, ValueError):
+        return jsonify({
+            "success": False,
+            "message": "Invalid business information."
+        }), 400
+
+    # Public business pages are currently accessible by business ID.
+    business = BusinessInformation.query.filter_by(
+        id=business_id
+    ).first()
+
+    if not business:
+        return jsonify({
+            "success": False,
+            "message": "Business not found."
+        }), 404
+
+    try:
+        now = datetime.datetime.now(datetime.timezone.utc)
+
+        token = gemini_client.auth_tokens.create(config={
+            "uses": 1,
+            "expire_time": now + datetime.timedelta(minutes=30),
+            "new_session_expire_time": now + datetime.timedelta(minutes=1),
+        })
+
+        return jsonify({
+            "success": True,
+            "token": token.name,
+            "business_id": business.id,
+            "business_name": (business.business_name or "").strip(),
+            "greeting_message": (business.greeting_message or "").strip(),
+            "assistant_introduction": (
+                business.assistant_introduction or ""
+            ).strip(),
+            "voice_name": (business.voice_name or "Kore").strip(),
+            "response_style": business.response_style or "friendly",
+            "preferred_language": business.preferred_language or "auto",
+        })
+
+    except Exception:
+        current_app.logger.exception(
+            "Gemini Live public token creation failed"
+        )
         return jsonify({
             "success": False,
             "message": "Could not create Gemini Live token."
@@ -2456,6 +2524,7 @@ def gemini_live_save_conversation():
 
         business_id = data.get("business_id")
         customer_id = data.get("customer_id")
+        session_id = data.get("session_id")
         transcript = data.get("transcript", "")
 
         if not business_id or not customer_id:
@@ -2526,6 +2595,7 @@ def gemini_live_save_conversation():
 
             saved_messages += 1
 
+
         if saved_messages == 0:
             db.session.rollback()
 
@@ -2534,7 +2604,31 @@ def gemini_live_save_conversation():
                 "message": "No valid conversation messages were found."
             }), 400
 
+        # Link the saved conversation to its call session.
+        if session_id:
+            session = db.session.get(
+                CallSession, int(session_id)
+            )
+
+            if not session or session.business_id != business.id:
+                db.session.rollback()
+                return jsonify({
+                    "success": False,
+                    "message": "Call session not found for this business."
+                }), 404
+
+            if session.customer_id and session.customer_id != customer.id:
+                db.session.rollback()
+                return jsonify({
+                    "success": False,
+                    "message": "Call session belongs to another customer."
+                }), 403
+
+            session.customer_id = customer.id
+            session.conversation_id = conversation.id
+
         db.session.commit()
+
 
         print(
             "CONVERSATION SAVED:",
@@ -3263,15 +3357,162 @@ def chat(business_id):
         "ai/chat.html",
         business=business
     )
+
 @ai_bp.route("/call/<int:business_id>")
 def call(business_id):
-    business = BusinessInformation.query.get_or_404(
-        business_id
-    )
+    business = BusinessInformation.query.get_or_404(business_id)
+
+    # Remember which entry point opened the AI Call page.
+    call_source = request.args.get("source", "crm")
+
+    if call_source not in ("crm", "public"):
+        call_source = "crm"
+
     return render_template(
         "ai/call.html",
-        business=business
+        business=business,
+        call_source=call_source
     )
+
+
+@ai_bp.route("/api/call-sessions/start", methods=["POST"])
+def start_call_session():
+    try:
+        data = request.get_json(silent=True) or {}
+
+        business_id = int(data.get("business_id"))
+
+        business = db.session.get(
+            BusinessInformation, business_id
+        )
+
+        if not business:
+            return jsonify({
+                "success": False,
+                "message": "Business not found."
+            }), 404
+
+        session = CallSession(
+            business_id=business.id,
+            status="In Progress"
+        )
+
+        db.session.add(session)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "session_id": session.id,
+            "started_at": session.started_at.isoformat()
+                if session.started_at else None
+        }), 201
+
+    except (TypeError, ValueError):
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "Invalid business ID."
+        }), 400
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Call session start failed"
+        )
+        return jsonify({
+            "success": False,
+            "message": "Could not start call session."
+        }), 500
+
+
+@ai_bp.route("/api/call-sessions/end", methods=["POST"])
+def end_call_session():
+    try:
+        data = request.get_json(silent=True) or {}
+
+        # sendBeacon may send the payload as text/plain.
+        if not data and request.data:
+            try:
+                data = json.loads(request.data.decode("utf-8"))
+            except (ValueError, UnicodeDecodeError):
+                data = {}
+
+        session_id_value = data.get("session_id")
+        business_id_value = data.get("business_id")
+
+        if not session_id_value or not business_id_value:
+            return jsonify({
+              "success": False,
+              "message": "Session ID and business ID are required."
+            }), 400
+
+        session_id = int(session_id_value)
+        business_id = int(business_id_value)
+
+        session = db.session.get(CallSession, session_id)
+
+        if not session or session.business_id != business_id:
+            return jsonify({
+                "success": False,
+                "message": "Call session not found."
+            }), 404
+
+        if session.ended_at:
+            return jsonify({
+                "success": True,
+                "message": "Call session already ended.",
+                "session_id": session.id
+            })
+
+        ended_at = datetime.datetime.now()
+
+        session.ended_at = ended_at
+        session.status = "Completed"
+        session.transcript = (
+            data.get("transcript") or ""
+        ).strip() or None
+
+        if session.started_at:
+            session.duration_seconds = max(
+                0,
+                int(
+                    (ended_at - session.started_at).total_seconds()
+                )
+            )
+
+        customer_id = data.get("customer_id")
+        if customer_id:
+            customer = db.session.get(
+                Customer, int(customer_id)
+            )
+            if customer and customer.user_id == session.business.user_id:
+                session.customer_id = customer.id
+
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "session_id": session.id,
+            "duration_seconds": session.duration_seconds
+        })
+
+    except (TypeError, ValueError):
+        db.session.rollback()
+        return jsonify({
+            "success": False,
+            "message": "Invalid session or customer ID."
+        }), 400
+
+    except Exception:
+        db.session.rollback()
+        current_app.logger.exception(
+            "Call session end failed"
+        )
+        return jsonify({
+            "success": False,
+            "message": "Could not end call session."
+        }), 500
+
 # ==========================================================
 # HELPER - FIND OR CREATE CUSTOMER
 # ==========================================================

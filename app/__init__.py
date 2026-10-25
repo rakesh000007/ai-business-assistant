@@ -33,6 +33,8 @@ def create_app():
         Conversation,
         ConversationMessage,
         FAQ,
+        Lead,
+        CallSession,
     )
     print("Before importing auth blueprint")
 

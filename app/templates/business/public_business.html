@@ -3,8 +3,9 @@
 {% block body_class %}page-home{% endblock %}
 
 {% block content %}
+
 {% set chat_url = url_for('ai.chat', business_id=business.id) %}
-{% set call_url = url_for('ai.call', business_id=business.id) %}
+{% set call_url = url_for('ai.call', business_id=business.id, source='public') %}
 
 <!-- ============ HERO ============ -->
 <section class="hero" id="home" aria-labelledby="hero-title">

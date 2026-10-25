@@ -7,3 +7,4 @@ from .conversation import Conversation
 from .conversation_message import ConversationMessage
 from .faq import FAQ
 from .lead import Lead
+from .call_session import CallSession

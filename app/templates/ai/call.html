@@ -30,8 +30,12 @@
            id="businessId"
            value="{{ business.id }}">
 
-    <main class="call-page">
+    <!-- Identifies whether the call started from the CRM or public website -->
+    <input type="hidden"
+           id="callSource"
+           value="{{ call_source }}">
 
+    <main class="call-page">
         <section class="call-assistant-shell">
 
             <!-- Business Header -->

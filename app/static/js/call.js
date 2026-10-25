@@ -95,6 +95,7 @@ let geminiOutputTranscript = "";
 let geminiInputTranscript = "";
 let geminiConversationTranscript = "";
 let savedCustomerId = null;
+let callSessionId = null;
 
 let excludedPropertyIds = [];
 let currentPropertyId = null;
@@ -643,21 +644,23 @@ console.log(
 // GEMINI LIVE CONNECTION TEST
 // --------------------------------------------------
 
-async function testGeminiLiveConnection() {
 
-    console.log(
-        "REQUESTING GEMINI LIVE TOKEN..."
-    );
+async function testGeminiLiveConnection() {
+    console.log("REQUESTING GEMINI LIVE TOKEN...");
 
     try {
+        const callSource =
+            document.getElementById("callSource")?.value || "crm";
 
-        const tokenResponse =
-            await fetch(
-                `/ai/api/gemini-live-token?business_id=${businessId}`
-            );
+        const tokenEndpoint = callSource === "public"
+            ? "/ai/api/gemini-live-public-token"
+            : "/ai/api/gemini-live-token";
 
-        const tokenData =
-            await tokenResponse.json();
+        const tokenResponse = await fetch(
+            `${tokenEndpoint}?business_id=${encodeURIComponent(businessId)}`
+        );
+
+        const tokenData = await tokenResponse.json();
         
         console.log(
           "SAVED GREETING RECEIVED FROM BACKEND:",
@@ -3928,37 +3931,76 @@ async function transcribeRecordedAudio(
 
 }
 
-   // --------------------------------------------------
+
+    // --------------------------------------------------
     // START CALL
     // --------------------------------------------------
 
- startBtn.addEventListener("click", () => {
+    startBtn.addEventListener("click", async () => {
 
-    if (isCalling) return;
+        if (isCalling) return;
 
+        if (!businessId) {
+            callStatus.textContent = "Business ID is missing.";
+            return;
+        }
 
-    isCalling = true;
+        startBtn.disabled = true;
+        callStatus.textContent = "Creating call session...";
 
+        try {
+            const sessionResponse = await fetch(
+                "/ai/api/call-sessions/start",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        business_id: businessId
+                    })
+                }
+            );
 
-    startBtn.style.display =
-        "none";
+            const sessionData = await sessionResponse.json();
 
+            if (!sessionResponse.ok || !sessionData.success) {
+                throw new Error(
+                    sessionData.message || "Could not create call session."
+                );
+            }
 
-    endBtn.style.display =
-        "inline-flex";
+            callSessionId = sessionData.session_id;
+            console.log("CALL SESSION CREATED:", callSessionId);
 
+            isCalling = true;
 
-    callTitle.textContent =
-        "AI Voice Assistant";
+            startBtn.style.display = "none";
+            endBtn.style.display = "inline-flex";
 
+            callTitle.textContent = "AI Voice Assistant";
+            callStatus.textContent = "Connecting to your AI assistant...";
 
-    callStatus.textContent =
-        "Connecting to your AI assistant...";
+            await testGeminiLiveConnection();
 
+        } catch (error) {
+            console.error("CALL START ERROR:", error);
 
-    testGeminiLiveConnection();
+            callStatus.textContent =
+                error.message || "Could not start the call.";
 
-});
+            isCalling = false;
+            callSessionId = null;
+
+            startBtn.style.display = "inline-flex";
+            endBtn.style.display = "none";
+
+        } finally {
+            startBtn.disabled = false;
+        }
+
+    });
+
 
 
     // --------------------------------------------------
@@ -3984,7 +4026,7 @@ async function transcribeRecordedAudio(
             ) {
 
                 try {
-
+                    console.log("SESSION ID FOR CONVERSATION:", callSessionId);
                     const conversationResponse =
                         await fetch(
                             "/ai/api/gemini-live/save-conversation",
@@ -3996,6 +4038,7 @@ async function transcribeRecordedAudio(
                                 body: JSON.stringify({
                                     business_id: businessId,
                                     customer_id: savedCustomerId,
+                                    session_id: callSessionId,
                                     transcript: geminiConversationTranscript
                                 })
                             }
@@ -4034,6 +4077,43 @@ async function transcribeRecordedAudio(
 
             }
 
+
+            // --------------------------------------------------
+            // SAVE CALL SESSION TO DATABASE
+            // --------------------------------------------------
+
+            if (callSessionId && businessId) {
+                try {
+                    const sessionResponse = await fetch(
+                        "/ai/api/call-sessions/end",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                session_id: callSessionId,
+                                business_id: businessId,
+                                customer_id: savedCustomerId,
+                                transcript: geminiConversationTranscript
+                            })
+                        }
+                    );
+
+                    const sessionData = await sessionResponse.json();
+
+                    if (!sessionResponse.ok || !sessionData.success) {
+                        throw new Error(
+                            sessionData.message || "Could not save call session."
+                        );
+                    }
+
+                    console.log("CALL SESSION SAVED:", sessionData);
+
+                } catch (error) {
+                    console.error("CALL SESSION SAVE ERROR:", error);
+                }
+            }
 
             // --------------------------------------------------
             // STOP GEMINI LIVE
@@ -4080,6 +4160,7 @@ async function transcribeRecordedAudio(
             savedCustomerId =
                 null;
 
+            callSessionId = null;
 
             if (deepgramKeepAliveTimer) {
 
@@ -4148,5 +4229,61 @@ async function transcribeRecordedAudio(
 
         }
     );
+
+    // --------------------------------------------------
+    // HANDLE PAGE RELOAD / TAB CLOSE DURING A CALL
+    // --------------------------------------------------
+
+    window.addEventListener("pagehide", () => {
+        if (!isCalling || !callSessionId || !businessId) {
+            return;
+        }
+
+        const sessionPayload = {
+            session_id: callSessionId,
+            business_id: businessId,
+            customer_id: savedCustomerId,
+            transcript: geminiConversationTranscript
+        };
+
+        // Best-effort notification to close the database session.
+        const blob = new Blob(
+            [JSON.stringify(sessionPayload)],
+            { type: "application/json" }
+        );
+
+        const sent = navigator.sendBeacon(
+            "/ai/api/call-sessions/end",
+            blob
+        );
+
+        console.log(
+            "PAGE EXIT: call-session end notification queued:",
+            sent
+        );
+
+        // Stop local voice resources during page exit.
+        stopGeminiMicrophone();
+
+        if (geminiSocket) {
+            geminiSocket.close();
+            geminiSocket = null;
+        }
+
+        if (deepgramKeepAliveTimer) {
+            clearInterval(deepgramKeepAliveTimer);
+            deepgramKeepAliveTimer = null;
+        }
+
+        if (deepgramSocket) {
+            deepgramSocket.close();
+            deepgramSocket = null;
+        }
+
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+        }
+    });
+
 
 });

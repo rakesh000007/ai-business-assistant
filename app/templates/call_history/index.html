@@ -596,6 +596,10 @@
                         {% if selected_status == 'Active' %}selected{% endif %}>
                         Active
                     </option>
+                    <option value="In Progress"
+                       {% if selected_status == 'In Progress' %}selected{% endif %}>
+                       In Progress
+                    </option> 
                 </select>
             </div>
 
@@ -630,7 +634,7 @@
         <div class="history-results-bar">
             <span>
                 
-                Showing <strong>{{ conversations | length }}</strong>
+                Showing <strong>{{ history_items | length }}</strong>
                 of <strong>{{ filtered_conversations }}</strong>
                 matching conversation(s)
 
@@ -654,22 +658,30 @@
                 </thead>
 
                 <tbody>
-                    {% for conversation in conversations %}
+                    {% for item in history_items %}
+                    
                     <tr>
                         <td>
                             <div class="history-customer">
-                                {{ conversation.customer.full_name }}
+                                {{ item.customer_name }}
                             </div>
+
+                            {% if item.customer_phone %}
+                                <div class="history-muted">
+                                    {{ item.customer_phone }}
+                                </div>
+                            {% endif %}
+
                             <div class="history-muted">
-                                Conversation #{{ conversation.id }}
+                                {{ item.kind | title }} #{{ item.id }}
                             </div>
                         </td>
 
                         <td>
-                            {% if conversation.started_at %}
-                                {{ conversation.started_at.strftime('%d %b %Y') }}
+                            {% if item.started_at %}
+                                {{ item.started_at.strftime('%d %b %Y') }}
                                 <div class="history-muted">
-                                    {{ conversation.started_at.strftime('%I:%M %p') }}
+                                    {{ item.started_at.strftime('%I:%M %p') }}
                                 </div>
                             {% else %}
                                 —
@@ -677,30 +689,45 @@
                         </td>
 
                         <td>
-                            <span class="history-message-count">
-                                {{ conversation.messages | length }}
-                            </span>
+                            {% if item.kind == 'conversation' %}
+                                <span class="history-message-count">
+                                    {{ item.message_count }}
+                                </span>
+                            {% elif item.duration_seconds is not none %}
+                                {{ item.duration_seconds // 60 }}m
+                                {{ item.duration_seconds % 60 }}s
+                            {% else %}
+                                —
+                            {% endif %}
                         </td>
 
                         <td>
-                            <span class="history-status {{ conversation.status | lower }}">
-                                {{ conversation.status }}
+                            <span class="history-status {{ item.status | lower | replace(' ', '-') }}">
+                                {{ item.status }}
                             </span>
                         </td>
 
                         <td>
                             <div class="history-actions">
-                                
-                                 <a class="history-view"
-                                    href="{{ url_for('call_history.transcript', conversation_id=conversation.id) }}">
-                                    <i class="bi bi-eye"></i>
-                                    View Transcript
-                                   <i class="bi bi-arrow-up-right"></i>
-                                </a>
-
+                                {% if item.kind == 'conversation' %}
+                                    <a class="history-view"
+                                       href="{{ url_for('call_history.transcript', conversation_id=item.id) }}">
+                                        <i class="bi bi-eye"></i>
+                                        View Transcript
+                                        <i class="bi bi-arrow-up-right"></i>
+                                    </a>
+                                {% else %}
+                                    <a class="history-view"
+                                       href="{{ url_for('call_history.session_transcript', session_id=item.id) }}">
+                                        <i class="bi bi-eye"></i>
+                                        View Transcript
+                                        <i class="bi bi-arrow-up-right"></i>
+                                    </a>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>
+
                     {% else %}
                     <tr>
                         <td colspan="5">

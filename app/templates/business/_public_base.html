@@ -68,7 +68,7 @@
           <li><a href="{{ home_url }}#about">About</a></li>
           <li><a href="{{ home_url }}#properties">Properties</a></li>
           <li><a href="{{ url_for('ai.chat', business_id=business.id) }}">Chat with AI</a></li>
-          <li><a href="{{ url_for('ai.call', business_id=business.id) }}">Talk to AI</a></li>
+          <li><a href="{{ url_for('ai.call', business_id=business.id, source='public') }}">Talk to AI</a></li>
         </ul>
       </div>
 
