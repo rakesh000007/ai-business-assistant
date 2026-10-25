@@ -28,3 +28,4 @@ instance/
 .pytest_cache/
 
 app/static/uploads/profiles/
+migrations_backup/
